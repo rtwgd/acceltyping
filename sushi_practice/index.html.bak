@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sushida Practice - Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="data.js"></script>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --surface-color: #2d2d2d;
+            --primary-color: #e2b714;
+            --secondary-color: #646b72;
+            --text-color: #e0e0e0;
+            --accent-color: #4CAF50;
+            --danger-color: #ff5252;
+            --font-main: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        header {
+            background-color: var(--surface-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        h1 {
+            font-weight: 300;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Menu */
+        .settings-panel {
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: grid;
+            gap: 2rem;
+        }
+
+        .setting-group h3 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .mode-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            padding: 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--secondary-color);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: #1a1a1a;
+            border: none;
+        }
+
+        button.primary:hover {
+            background-color: #f4c430;
+        }
+
+        /* Game Screen */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+        }
+
+        #displayZone {
+            background-color: var(--surface-color);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            position: relative;
+            padding: 3rem;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .display-kana {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            font-family: monospace;
+            min-height: 1.5em;
+        }
+
+        .display-kanji {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #fff;
+            margin: 1rem 0;
+            min-height: 1.2em;
+            text-align: center;
+        }
+
+        .display-romaji {
+            font-size: 2rem;
+            font-family: monospace;
+            color: var(--secondary-color);
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            min-height: 1.5em;
+        }
+
+        .typed {
+            color: var(--secondary-color);
+            opacity: 0.5;
+        }
+
+        .untyped {
+            color: var(--text-color);
+        }
+
+        .live-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            position: absolute;
+            bottom: -80px;
+            width: 100%;
+        }
+
+        .stat-box {
+            background: var(--surface-color);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #444;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        #startOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 5;
+        }
+
+        .start-msg {
+            font-size: 2rem;
+            color: var(--primary-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.7;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        /* Results */
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            background: var(--surface-color);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+
+        .result-item {
+            text-align: center;
+            border: 1px solid #444;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        /* History */
+        .chart-container {
+            background: var(--surface-color);
+            padding: 1rem;
+            border-radius: 12px;
+            height: 300px;
+            width: 100%;
+        }
+
+        .weak-word-list {
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+            background: #222;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Overlap fixes */
+        #gameScreen .text-center {
+            margin-top: 5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>Sushida Practice <span
+                    style="font-size:0.5em; border:1px solid var(--primary-color); padding:2px 5px; border-radius:4px; color:var(--primary-color)">PRO</span>
+            </h1>
+        </div>
+    </header>
+
+    <main>
+        <!-- MENU SCREEN -->
+        <div id="gameMenu" class="screen active">
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <h3>難易度</h3>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label"><input type="checkbox" name="difficulty" value="easy" checked>
+                            Easy (短文)</label>
+                        <label class="checkbox-label"><input type="checkbox" name="difficulty" value="normal" checked>
+                            Normal (普通)</label>
+                        <label class="checkbox-label"><input type="checkbox" name="difficulty" value="hard" checked>
+                            Hard (長文)</label>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>プレイ設定</h3>
+                    <div style="display:flex; gap:2rem; align-items:center;">
+                        <label>ワード数:
+                            <select id="settingWordCount" style="background:#333; color:#fff; padding:5px;">
+                                <option value="10">10単語</option>
+                                <option value="30" selected>30単語</option>
+                                <option value="50">50単語</option>
+                                <option value="0">無制限</option>
+                            </select>
+                        </label>
+                        <label>苦手判定閾値: <input type="number" id="settingWeakThreshold" value="20"
+                                style="width:60px; background:#333; color:#fff; border:1px solid #555"> %</label>
+                    </div>
+                </div>
+
+                <div class="mode-buttons">
+                    <button class="primary" onclick="app.startGame('normal')">▶ 通常練習スタート</button>
+                    <button onclick="app.startGame('weak')">💪 苦手ワード特訓</button>
+                    <button onclick="app.startGame('familiarize')">🔄 ワード慣れ (1巡)</button>
+                    <button onclick="app.showScreen('history')">📊 履歴・グラフ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="gameScreen" class="screen">
+            <div class="game-header">
+                <span id="gameModeDisplay">Mode: Normal</span>
+                <span id="gameProgressDisplay">0 / 30</span>
+            </div>
+
+            <div id="displayZone">
+                <div id="startOverlay">
+                    <div class="start-msg">Space to Start</div>
+                    <div style="color:#aaa; margin-top:10px;">（スペースキーで開始）</div>
+                </div>
+
+                <!-- Kana Top -->
+                <div id="kanaDisplay" class="display-kana"></div>
+                <!-- Kanji Center -->
+                <div id="kanjiDisplay" class="display-kanji">Press Space</div>
+                <!-- Romaji Bottom -->
+                <div id="romajiDisplay" class="display-romaji"></div>
+
+                <div class="live-stats">
+                    <div class="stat-box">
+                        <div style="font-size:0.8rem; color:#888;">Sushi KPS</div>
+                        <div id="liveSushiKPS" class="stat-value">0.0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="font-size:0.8rem; color:#888;">Pure KPS</div>
+                        <div id="livePureKPS" class="stat-value">0.0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="font-size:0.8rem; color:#888;">Latency</div>
+                        <div id="liveLatency" class="stat-value">-</div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="font-size:0.8rem; color:#888;">Accuracy</div>
+                        <div id="liveAccuracy" class="stat-value">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button onclick="app.endGame()"
+                    style="background:transparent; border:1px solid #444; color:#666; padding:0.5rem 2rem;">中断
+                    (Esc)</button>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="resultScreen" class="screen">
+            <h2>Result</h2>
+            <div class="result-grid">
+                <div class="result-item">
+                    <h4>Sushi KPM / KPS</h4>
+                    <div style="font-size:2rem; color:var(--primary-color); font-weight:bold;">
+                        <span id="resSushiKPM">0</span>
+                        <span style="font-size:1rem; color:#888;">/ <span id="resSushiKPS">0.0</span></span>
+                    </div>
+                    <div style="font-size:0.8rem; color:#888;">標準機能</div>
+                </div>
+                <div class="result-item">
+                    <h4>Pure KPM / KPS</h4>
+                    <div style="font-size:2rem; color:var(--primary-color); font-weight:bold;">
+                        <span id="resPureKPM">0</span>
+                        <span style="font-size:1rem; color:#888;">/ <span id="resPureKPS">0.0</span></span>
+                    </div>
+                    <div style="font-size:0.8rem; color:#888;">反応時間除く</div>
+                </div>
+                <div class="result-item">
+                    <h4>Avg Latency</h4>
+                    <div style="font-size:2rem; color:var(--primary-color); font-weight:bold;"><span
+                            id="resLatency">0</span>ms</div>
+                </div>
+                <div class="result-item">
+                    <h4>Accuracy</h4>
+                    <div style="font-size:2rem; color:var(--primary-color); font-weight:bold;"><span
+                            id="resAccuracy">100</span>%</div>
+                </div>
+            </div>
+
+            <div id="weakWordsResult"
+                style="background:#2d2020; padding:1rem; border-radius:8px; display:none; margin-bottom:2rem;">
+                <h3 style="color:#ff5252; margin-bottom:0.5rem;">⚠️ 今回の苦手認定ワード</h3>
+                <div id="newWeakWordsList" class="weak-word-list"></div>
+            </div>
+
+            <div class="mode-buttons">
+                <button class="primary" onclick="app.retry()">もう一度</button>
+                <button onclick="app.showScreen('menu')">メニューへ戻る</button>
+            </div>
+        </div>
+
+        <!-- HISTORY SCREEN -->
+        <div id="historyScreen" class="screen">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h2>History</h2>
+                <button onclick="app.showScreen('menu')">閉じる</button>
+            </div>
+
+            <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                <button onclick="historyApp.exportData()">保存 (JSON)</button>
+                <button onclick="document.getElementById('importFile').click()">読み込み</button>
+                <input type="file" id="importFile" style="display:none" onchange="historyApp.importData(this)">
+                <button onclick="historyApp.clearData()"
+                    style="color:var(--danger-color); border-color:var(--danger-color)">全削除</button>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="historyChart"></canvas>
+            </div>
+
+            <div style="margin-top:2rem;">
+                <h3>苦手ワード一覧</h3>
+                <div id="allWeakWordsList" class="weak-word-list"
+                    style="background:var(--surface-color); margin-top:1rem;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Full Typing Engine Port ---
+
+        class ChunkPattern { }
+        ChunkPattern.list = new Map([
+            ["あ", [["a"]]], ["い", [["i"], ["yi"]]], ["う", [["u"], ["wu"], ["whu"]]], ["え", [["e"]]], ["お", [["o"]]],
+            ["うぁ", [["wha"]]], ["うぃ", [["wi"], ["whi"]]], ["うぇ", [["we"], ["whe"]]], ["うぉ", [["who"]]],
+            ["ゐ", [["wi"]]], ["ゑ", [["we"]]], ["ぁ", [["la"], ["xa"]]], ["ぃ", [["li"], ["xi"], ["lyi"], ["xyi"]]], ["ぅ", [["lu"], ["xu"]]], ["ぇ", [["le"], ["xe"], ["lye"], ["xye"]]], ["ぉ", [["lo"], ["xo"]]],
+            ["ぃぇ", [["ye"]]], ["か", [["ka"], ["ca"]]], ["き", [["ki"]]], ["く", [["ku"], ["cu"], ["qu"]]], ["け", [["ke"]]], ["こ", [["ko"], ["co"]]],
+            ["きゃ", [["kya"]]], ["きぃ", [["kyi"]]], ["きゅ", [["kyu"]]], ["きぇ", [["kye"]]], ["きょ", [["kyo"]]],
+            ["くゃ", [["qya"]]], ["くゅ", [["qyu"]]], ["くょ", [["qyo"]]], ["くぁ", [["qa"], ["qwa"], ["kwa"]]], ["くぃ", [["qi"], ["qwi"], ["qyi"]]], ["くぅ", [["qwu"]]], ["くぇ", [["qe"], ["qwe"], ["qye"]]], ["くぉ", [["qo"], ["qwo"]]],
+            ["が", [["ga"]]], ["ぎ", [["gi"]]], ["ぐ", [["gu"]]], ["げ", [["ge"]]], ["ご", [["go"]]],
+            ["ぎゃ", [["gya"]]], ["ぎぃ", [["gyi"]]], ["ぎゅ", [["gyu"]]], ["ぎぇ", [["gye"]]], ["ぎょ", [["gyo"]]],
+            ["ぐぁ", [["gwa"]]], ["ぐぃ", [["gwi"]]], ["ぐぅ", [["gwu"]]], ["ぐぇ", [["gwe"]]], ["ぐぉ", [["gwo"]]],
+            ["ヵ", [["lka"], ["xka"]]], ["ヶ", [["lke"], ["xke"]]], ["さ", [["sa"]]], ["し", [["si"], ["ci"], ["shi"]]], ["す", [["su"]]], ["せ", [["se"], ["ce"]]], ["そ", [["so"]]],
+            ["しゃ", [["sya"], ["sha"]]], ["しぃ", [["syi"]]], ["しゅ", [["syu"], ["shu"]]], ["しぇ", [["sye"], ["she"]]], ["しょ", [["syo"], ["sho"]]],
+            ["すぁ", [["swa"]]], ["すぃ", [["swi"]]], ["すぅ", [["swu"]]], ["すぇ", [["swe"]]], ["すぉ", [["swo"]]],
+            ["ざ", [["za"]]], ["じ", [["zi"], ["ji"]]], ["ず", [["zu"]]], ["ぜ", [["ze"]]], ["ぞ", [["zo"]]],
+            ["じゃ", [["ja"], ["zya"], ["jya"]]], ["じぃ", [["zyi"], ["jyi"]]], ["じゅ", [["ju"], ["zyu"], ["jyu"]]], ["じぇ", [["je"], ["zye"], ["jye"]]], ["じょ", [["jo"], ["zyo"], ["jyo"]]],
+            ["た", [["ta"]]], ["ち", [["ti"], ["chi"]]], ["つ", [["tu"], ["tsu"]]], ["て", [["te"]]], ["と", [["to"]]],
+            ["ちゃ", [["tya"], ["cha"], ["cya"]]], ["ちぃ", [["tyi"], ["cyi"]]], ["ちゅ", [["tyu"], ["chu"], ["cyu"]]], ["ちぇ", [["tye"], ["che"], ["cye"]]], ["ちょ", [["tyo"], ["cho"], ["cyo"]]],
+            ["つぁ", [["tsa"]]], ["つぃ", [["tsi"]]], ["つぇ", [["tse"]]], ["つぉ", [["tso"]]],
+            ["てゃ", [["tha"]]], ["てぃ", [["thi"]]], ["てゅ", [["thu"]]], ["てぇ", [["the"]]], ["てょ", [["tho"]]],
+            ["とぁ", [["twa"]]], ["とぃ", [["twi"]]], ["とぅ", [["twu"]]], ["とぇ", [["twe"]]], ["とぉ", [["two"]]],
+            ["だ", [["da"]]], ["ぢ", [["di"]]], ["づ", [["du"]]], ["で", [["de"]]], ["ど", [["do"]]],
+            ["ぢゃ", [["dya"]]], ["ぢぃ", [["dyi"]]], ["ぢゅ", [["dyu"]]], ["ぢぇ", [["dye"]]], ["ぢょ", [["dyo"]]],
+            ["でゃ", [["dha"]]], ["でぃ", [["dhi"]]], ["でゅ", [["dhu"]]], ["でぇ", [["dhe"]]], ["でょ", [["dho"]]],
+            ["どぁ", [["dwa"]]], ["どぃ", [["dwi"]]], ["どぅ", [["dwu"]]], ["どぇ", [["dwe"]]], ["どぉ", [["dwo"]]],
+            ["っ", [["ltu"], ["xtu"], ["ltsu"], ["xtsu"]]], ["な", [["na"]]], ["に", [["ni"]]], ["ぬ", [["nu"]]], ["ね", [["ne"]]], ["の", [["no"]]],
+            ["にゃ", [["nya"]]], ["にぃ", [["nyi"]]], ["にゅ", [["nyu"]]], ["にぇ", [["nye"]]], ["にょ", [["nyo"]]],
+            ["は", [["ha"]]], ["ひ", [["hi"]]], ["ふ", [["hu"], ["fu"]]], ["へ", [["he"]]], ["ほ", [["ho"]]],
+            ["ひゃ", [["hya"]]], ["ひぃ", [["hyi"]]], ["ひゅ", [["hyu"]]], ["ひぇ", [["hye"]]], ["ひょ", [["hyo"]]],
+            ["ふぁ", [["fa"], ["fwa"]]], ["ふぃ", [["fi"], ["fwi"], ["fyi"]]], ["ふぅ", [["fwu"]]], ["ふぇ", [["fe"], ["fwe"], ["fye"]]], ["ふぉ", [["fo"], ["fwo"]]],
+            ["ふゃ", [["fya"]]], ["ふゅ", [["fyu"]]], ["ふょ", [["fyo"]]], ["ば", [["ba"]]], ["び", [["bi"]]], ["ぶ", [["bu"]]], ["べ", [["be"]]], ["ぼ", [["bo"]]],
+            ["びゃ", [["bya"]]], ["びぃ", [["byi"]]], ["びゅ", [["byu"]]], ["びぇ", [["bye"]]], ["びょ", [["byo"]]],
+            ["ヴぁ", [["va"]]], ["ヴぃ", [["vi"]]], ["ヴ", [["vu"]]], ["ヴぇ", [["ve"]]], ["ヴぉ", [["vo"]]],
+            ["ヴゃ", [["vya"]]], ["ヴぃ", [["vyi"]]], ["ヴゅ", [["vyu"]]], ["ヴぇ", [["vye"]]], ["ヴょ", [["vyo"]]],
+            ["ぱ", [["pa"]]], ["ぴ", [["pi"]]], ["ぷ", [["pu"]]], ["ぺ", [["pe"]]], ["ぽ", [["po"]]],
+            ["ぴゃ", [["pya"]]], ["ぴぃ", [["pyi"]]], ["ぴゅ", [["pyu"]]], ["ぴぇ", [["pye"]]], ["ぴょ", [["pyo"]]],
+            ["ま", [["ma"]]], ["み", [["mi"]]], ["む", [["mu"]]], ["め", [["me"]]], ["も", [["mo"]]],
+            ["みゃ", [["mya"]]], ["みぃ", [["myi"]]], ["みゅ", [["myu"]]], ["みぇ", [["mye"]]], ["みょ", [["myo"]]],
+            ["や", [["ya"]]], ["ゆ", [["yu"]]], ["よ", [["yo"]]], ["ゃ", [["lya"], ["xya"]]], ["ゅ", [["lyu"], ["xyu"]]], ["ょ", [["lyo"], ["xyo"]]],
+            ["ら", [["ra"]]], ["り", [["ri"]]], ["る", [["ru"]]], ["れ", [["re"]]], ["ろ", [["ro"]]],
+            ["りゃ", [["rya"]]], ["りぃ", [["ryi"]]], ["りゅ", [["ryu"]]], ["りぇ", [["rye"]]], ["りょ", [["ryo"]]],
+            ["わ", [["wa"]]], ["を", [["wo"]]], ["ん", [["n"], ["nn"], ["n'"], ["xn"]]], ["ゎ", [["lwa"], ["xwa"]]], ["ー", [["-"]]], ["　", [[" "]]]
+        ]);
+
+        ChunkPattern._initialize = (() => {
+            for (const chunkPattern of ChunkPattern.list) {
+                const kana = chunkPattern[0];
+                if (kana.length >= 2) {
+                    let multiPattern = [];
+                    for (const c of kana) {
+                        if (multiPattern.length === 0) {
+                            multiPattern = ChunkPattern.list.get(c);
+                        } else {
+                            const tmp = [];
+                            for (const p1 of multiPattern) {
+                                for (const p2 of ChunkPattern.list.get(c)) {
+                                    tmp.push(p1.concat(p2));
+                                }
+                            }
+                            multiPattern = tmp;
+                        }
+                    }
+                    ChunkPattern.list.set(kana, chunkPattern[1].concat(multiPattern));
+                }
+            }
+        })();
+
+        class TypePattern {
+            constructor(romanList) {
+                this._isValid = true;
+                this._romanCount = 0;
+                this._curKanaRomanIndex = 0;
+                this._curKanaRomanCount = 0;
+                this._kanaRomanList = romanList;
+                this._roman = romanList.join("");
+            }
+            getCurChar() { return this._roman[this._romanCount] || ''; }
+            increment(kanaFinished) {
+                ++this._romanCount;
+                ++this._curKanaRomanCount;
+                if (this._curKanaRomanCount >= this._curKanaRoman.length) {
+                    ++this._curKanaRomanIndex;
+                    this._curKanaRomanCount = 0;
+                    kanaFinished && kanaFinished(this._curKanaRomanIndex);
+                }
+            }
+            get _curKanaRoman() { return this._kanaRomanList[this._curKanaRomanIndex]; }
+            get isValid() { return this._isValid; }
+            isChunkFinished() { return this._romanCount >= this._roman.length; }
+            invalidate() { this._isValid = false; }
+            getTypedRomaji() { return this._roman.substring(0, this._romanCount); }
+            getRestRomaji() { return this._roman.substring(this._romanCount); }
+        }
+
+        class TypePatternList {
+            constructor(romanLists) {
+                this._displayPatternNum = 0;
+                this._isChunkFinished = false;
+                this._typePatternList = romanLists.map((romanList) => new TypePattern(romanList));
+            }
+            isCorrectInput(inputChar) {
+                for (const typePattern of this._typePatternList) {
+                    if (typePattern.isValid && typePattern.getCurChar() === inputChar) return true;
+                }
+                return false;
+            }
+            update(inputChar, kanaFinished) {
+                if (!this.isCorrectInput(inputChar)) return false;
+                for (const typePattern of this._typePatternList) {
+                    if (!typePattern.isValid) continue;
+                    if (inputChar === typePattern.getCurChar()) {
+                        typePattern.increment(kanaFinished);
+                        if (typePattern.isChunkFinished()) {
+                            this._isChunkFinished = true;
+                            continue;
+                        }
+                    } else {
+                        if (typePattern === this._typePatternList[this._displayPatternNum]) {
+                            this._displayPatternNum = -1;
+                        }
+                        typePattern.invalidate();
+                    }
+                }
+                if (this._displayPatternNum === -1) {
+                    for (let i = 0; i < this._typePatternList.length; ++i) {
+                        if (this._typePatternList[i].isValid) {
+                            this._displayPatternNum = i;
+                            break;
+                        }
+                    }
+                }
+                return true;
+            }
+            get isChunkFinished() { return this._isChunkFinished; }
+            getDisplayPattern() { return this._typePatternList[this._displayPatternNum]; }
+        }
+
+        class Chunk {
+            constructor(kana) {
+                this._kanaCount = 0;
+                this._xtuVowels = ["a", "i", "u", "e", "o", "n"];
+                this._xnVowels = this._xtuVowels.concat(["y"]);
+                this._kana = kana;
+
+                if (!ChunkPattern.list.has(kana)) {
+                    if (kana.length > 1 && ChunkPattern.list.has(kana[0]) && ChunkPattern.list.has(kana.substr(1))) {
+                        const curPatterns = ChunkPattern.list.get(kana.substr(1));
+                        const newPatterns = [];
+                        const xnPatterns = ChunkPattern.list.get(kana[0]);
+                        for (const roman of curPatterns) {
+                            for (const xn of xnPatterns) {
+                                if (xn[0] !== "n") { newPatterns.push(xn.concat(roman)); }
+                                else if (!this._xnVowels.includes(roman[0][0])) { newPatterns.push(xn.concat(roman)); }
+                            }
+                        }
+                        this._typePatternList = new TypePatternList(newPatterns);
+                    } else {
+                        this._typePatternList = new TypePatternList([[]]);
+                    }
+                } else if (kana.length == 1) {
+                    this._typePatternList = new TypePatternList(ChunkPattern.list.get(kana));
+                } else {
+                    if (kana[0] === "っ") {
+                        const curPatterns = ChunkPattern.list.get(kana.substr(1));
+                        const newPatterns = [];
+                        for (const roman of curPatterns) {
+                            const romanFirstChar = roman[0][0];
+                            if (!this._xtuVowels.includes(romanFirstChar)) {
+                                newPatterns.push([romanFirstChar].concat(roman));
+                            }
+                        }
+                        for (const roman of curPatterns) {
+                            for (const xtu of ChunkPattern.list.get("っ")) {
+                                newPatterns.push(xtu.concat(roman));
+                            }
+                        }
+                        this._typePatternList = new TypePatternList(newPatterns);
+                    } else if (kana[0] === "ん") {
+                        const curPatterns = ChunkPattern.list.get(kana.substr(1));
+                        const newPatterns = [];
+                        const xnPatterns = ChunkPattern.list.get("ん");
+                        for (const roman of curPatterns) {
+                            for (const xn of xnPatterns) {
+                                if (xn[0] !== "n") { newPatterns.push(xn.concat(roman)); }
+                                else if (!this._xnVowels.includes(roman[0][0])) { newPatterns.push(xn.concat(roman)); }
+                            }
+                        }
+                        this._typePatternList = new TypePatternList(newPatterns);
+                    } else {
+                        this._typePatternList = new TypePatternList(ChunkPattern.list.get(kana));
+                    }
+                }
+            }
+            update(inputChar) {
+                const kanaFinished = (newKanaCount) => { this._kanaCount = newKanaCount; };
+                const ret = this._typePatternList.update(inputChar, kanaFinished);
+                if (this._typePatternList.isChunkFinished) { this._kanaCount = this._kana.length; }
+                return ret;
+            }
+            get isChunkFinished() { return this._typePatternList.isChunkFinished; }
+            get kana() { return this._kana; }
+            getDisplayPattern() { return this._typePatternList.getDisplayPattern(); }
+        }
+
+        function devideIntoChunk(kana) {
+            const ret = [];
+            for (let i = 0; i < kana.length; ++i) {
+                if (i >= kana.length - 1) {
+                    ret.push(new Chunk(kana[i]));
+                    break;
+                }
+                if (kana[i] !== "っ" && kana[i] !== "ん") {
+                    if (!ChunkPattern.list.has(kana[i] + kana[i + 1])) {
+                        ret.push(new Chunk(kana[i]));
+                    } else {
+                        ret.push(new Chunk(kana[i] + kana[i + 1]));
+                        ++i;
+                    }
+                } else {
+                    if (i >= kana.length - 2) {
+                        ret.push(new Chunk(kana[i] + kana[i + 1]));
+                        break;
+                    }
+                    if (!ChunkPattern.list.has(kana[i + 1] + kana[i + 2])) {
+                        ret.push(new Chunk(kana[i] + kana[i + 1]));
+                        ++i;
+                    } else {
+                        ret.push(new Chunk(kana[i] + kana[i + 1] + kana[i + 2]));
+                        i += 2;
+                    }
+                }
+            }
+            return ret;
+        }
+
+        class WordTyper {
+            constructor(kana) {
+                this.kana = kana;
+                this.chunks = devideIntoChunk(kana);
+                this.chunkIndex = 0;
+            }
+            update(key) {
+                if (this.isFinished()) return { isCorrect: false };
+                const currentChunk = this.chunks[this.chunkIndex];
+                let isCorrect = currentChunk.update(key);
+                if (!isCorrect) {
+                    // Lookahead for sokuon
+                    const nextChunk = this.chunks[this.chunkIndex + 1];
+                    if (currentChunk && typeof currentChunk.kana === 'string' && currentChunk.kana[0] === 'っ' && nextChunk) {
+                        try {
+                            const tpl = nextChunk._typePatternList && nextChunk._typePatternList._typePatternList;
+                            if (tpl && tpl.length > 0) {
+                                let matchNextFirstChar = false;
+                                for (const tp of tpl) {
+                                    if ((tp.getCurChar && tp.getCurChar()) === key) {
+                                        matchNextFirstChar = true;
+                                        break;
+                                    }
+                                }
+                                if (matchNextFirstChar) {
+                                    currentChunk._kanaCount = currentChunk._kana.length;
+                                    this.chunkIndex++;
+                                    if (!this.isFinished()) return this.update(key);
+                                    else return { isCorrect: true, isFinished: true };
+                                }
+                            }
+                        } catch (err) { }
+                    }
+                }
+                if (currentChunk.isChunkFinished) {
+                    this.chunkIndex++;
+                }
+                return { isCorrect, isFinished: this.isFinished() };
+            }
+            isFinished() { return this.chunkIndex >= this.chunks.length; }
+            getDisplayState() {
+                let typedK = "";
+                let untypedK = "";
+                let typedR = "";
+                let untypedR = "";
+
+                this.chunks.forEach((chunk, i) => {
+                    const pat = chunk.getDisplayPattern();
+                    if (i < this.chunkIndex) {
+                        typedK += chunk.kana;
+                        typedR += (pat ? pat._roman : "");
+                    } else if (i === this.chunkIndex) {
+                        typedK += chunk.kana.substring(0, chunk._kanaCount);
+                        untypedK += chunk.kana.substring(chunk._kanaCount);
+
+                        typedR += (pat ? pat.getTypedRomaji() : "");
+                        untypedR += (pat ? pat.getRestRomaji() : "");
+                    } else {
+                        untypedK += chunk.kana;
+                        untypedR += (pat ? pat._roman : "");
+                    }
+                });
+                return { typedK, untypedK, typedR, untypedR };
+            }
+        }
+
+        // --- History Manager ---
+        class HistoryManager {
+            constructor() {
+                this.storageKey = 'sushida_history_pro';
+                this.history = this.load();
+                this.chart = null;
+            }
+            load() {
+                const d = localStorage.getItem(this.storageKey);
+                return d ? JSON.parse(d) : [];
+            }
+            save(rec) {
+                this.history.push(rec);
+                localStorage.setItem(this.storageKey, JSON.stringify(this.history));
+                this.updateChart();
+            }
+            clearData() {
+                if (confirm("履歴を削除しますか？")) {
+                    this.history = [];
+                    localStorage.removeItem(this.storageKey);
+                    this.updateChart();
+                }
+            }
+            exportData() {
+                const blob = new Blob([JSON.stringify(this.history, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = 'history.json';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            }
+            importData(el) {
+                const f = el.files[0];
+                if (!f) return;
+                const r = new FileReader();
+                r.onload = (e) => {
+                    try {
+                        const d = JSON.parse(e.target.result);
+                        this.history = this.history.concat(d);
+                        localStorage.setItem(this.storageKey, JSON.stringify(this.history));
+                        this.updateChart();
+                        alert("読み込みました");
+                    } catch (err) { alert("エラー"); }
+                };
+                r.readAsText(f);
+            }
+            initChart() {
+                const ctx = document.getElementById('historyChart');
+                if (!ctx) return;
+                this.chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: this.history.map((_, i) => i + 1),
+                        datasets: [{
+                            label: 'Sushi KPM',
+                            data: this.history.map(r => r.kpm),
+                            backgroundColor: '#e2b714'
+                        }]
+                    },
+                    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                });
+            }
+            updateChart() {
+                if (!this.chart) { this.initChart(); return; }
+                this.chart.data.labels = this.history.map((_, i) => i + 1);
+                this.chart.data.datasets[0].data = this.history.map(r => r.kpm);
+                this.chart.update();
+            }
+        }
+
+        // --- Application ---
+        const historyApp = new HistoryManager();
+
+        const app = {
+            screen: 'menu',
+            mode: 'normal',
+            words: [],
+            currentWordIndex: 0,
+            wordTyper: null,
+            state: {
+                startTime: 0,
+                correctKeys: 0,
+                totalKeys: 0,
+                latencies: [],
+                pureTimes: [],
+                isActive: false,
+                isWaitingForWord: false
+            },
+            config: { weakThreshold: 20 },
+            dicts: { easy: [], normal: [], hard: [] },
+
+            init() {
+                try {
+                    // Check if global data is loaded (from data.js)
+                    if (typeof DATA_EASY !== 'undefined') this.dicts.easy = DATA_EASY.list;
+                    if (typeof DATA_NORMAL !== 'undefined') this.dicts.normal = DATA_NORMAL.list;
+                    if (typeof DATA_HARD !== 'undefined') this.dicts.hard = DATA_HARD.list;
+                } catch (e) { console.error(e); }
+
+                window.addEventListener('keydown', (e) => this.handleKey(e));
+                historyApp.initChart();
+                this.loadSettings();
+            },
+
+            loadSettings() {
+                const s = localStorage.getItem('sushida_settings');
+                if (s) {
+                    const parsed = JSON.parse(s);
+                    const wc = document.getElementById('settingWordCount');
+                    const wt = document.getElementById('settingWeakThreshold');
+                    if (wc) wc.value = parsed.wordCount;
+                    if (wt) wt.value = parsed.weakThreshold;
+                }
+            },
+
+            handleKey(e) {
+                if (e.key === 'Escape') {
+                    if (this.state.isActive) this.endGame();
+                    return;
+                }
+
+                // Global start handler
+                if (!this.state.isActive && this.screen === 'game') {
+                    if (e.code === 'Space' || e.key === ' ') {
+                        e.preventDefault();
+                        this.startFirstWord();
+                    }
+                    return;
+                }
+
+                if (!this.state.isActive || this.state.isWaitingForWord) return;
+
+                e.preventDefault(); // Stop scrolling and system keys
+
+                const key = e.key;
+                if (key.length !== 1) return;
+
+                if (!this.currentWordStarted) {
+                    const lat = Date.now() - this.wordDisplayTime;
+                    this.state.latencies.push(lat);
+                    this.currentWordStarted = true;
+                    this.wordPureStartTime = Date.now();
+                }
+
+                const res = this.wordTyper.update(key);
+                this.state.totalKeys++;
+                if (res.isCorrect) {
+                    this.state.correctKeys++;
+                    this.updateDisplay();
+                    if (res.isFinished) {
+                        this.finishWord();
+                    }
+                }
+                this.updateLiveStats();
+            },
+
+            showScreen(id) {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                const target = document.getElementById(id === 'menu' ? 'gameMenu' : (id === 'history' ? 'historyScreen' : 'gameScreen'));
+                if (target) {
+                    target.classList.add('active');
+                    this.screen = id;
+                }
+                if (id === 'history') historyApp.updateChart();
+            },
+
+            startGame(mode) {
+                this.mode = mode;
+                this.words = this.generateWordList(mode);
+                if (this.words.length === 0) {
+                    alert("ワードデータが見つかりません。data.jsがあるか確認してください。");
+                    return;
+                }
+
+                this.showScreen('game');
+
+                this.state = {
+                    startTime: 0,
+                    correctKeys: 0,
+                    totalKeys: 0,
+                    latencies: [],
+                    pureTimes: [],
+                    isActive: false,
+                    isWaitingForWord: true
+                };
+
+                const overlay = document.getElementById('startOverlay');
+                if (overlay) overlay.style.display = 'flex';
+                document.getElementById('displayZone').style.opacity = '0.5';
+
+                document.getElementById('kanjiDisplay').textContent = "Press Space";
+                document.getElementById('kanaDisplay').textContent = "";
+                document.getElementById('romajiDisplay').textContent = "";
+
+                this.updateLiveStats();
+
+                localStorage.setItem('sushida_settings', JSON.stringify({
+                    wordCount: document.getElementById('settingWordCount').value,
+                    weakThreshold: document.getElementById('settingWeakThreshold').value
+                }));
+            },
+
+            startFirstWord() {
+                const overlay = document.getElementById('startOverlay');
+                if (overlay) overlay.style.display = 'none';
+                document.getElementById('displayZone').style.opacity = '1';
+                this.state.isActive = true;
+                this.state.startTime = Date.now();
+                this.currentWordIndex = -1;
+                this.nextWord();
+            },
+
+            nextWord() {
+                this.currentWordIndex++;
+                if (this.currentWordIndex >= this.words.length) {
+                    this.endGame(true);
+                    return;
+                }
+
+                const wordObj = this.words[this.currentWordIndex];
+                const kanaStr = Array.isArray(wordObj.kana) ? wordObj.kana.join('') : wordObj.kana;
+
+                this.currentWordObj = wordObj;
+                this.wordTyper = new WordTyper(kanaStr);
+
+                this.state.isWaitingForWord = false;
+                this.currentWordStarted = false;
+                this.wordDisplayTime = Date.now();
+
+                this.updateDisplay();
+                document.getElementById('gameProgressDisplay').textContent = `${this.currentWordIndex + 1} / ${this.words.length}`;
+            },
+
+            updateDisplay() {
+                const d = this.wordTyper.getDisplayState();
+
+                document.getElementById('kanjiDisplay').textContent = this.currentWordObj.text;
+                document.getElementById('kanaDisplay').innerHTML =
+                    `<span class="typed">${d.typedK}</span><span class="untyped">${d.untypedK}</span>`;
+                document.getElementById('romajiDisplay').innerHTML =
+                    `<span class="typed">${d.typedR}</span><span class="untyped" style="opacity:1; color:#888;">${d.untypedR}</span>`;
+            },
+
+            finishWord() {
+                const pureTime = Date.now() - this.wordPureStartTime;
+                this.state.pureTimes.push({
+                    time: pureTime,
+                    // Estimate keystrokes for pure KPM
+                    keys: this.wordTyper.chunks.reduce((acc, c) => acc + c._kana.length, 0)
+                });
+
+                // Weak word recording could go here
+
+                this.nextWord();
+            },
+
+            generateWordList(mode) {
+                let pool = [];
+                const easy = document.querySelector('input[value="easy"]').checked;
+                const normal = document.querySelector('input[value="normal"]').checked;
+                const hard = document.querySelector('input[value="hard"]').checked;
+
+                if (mode === 'normal' || mode === 'familiarize') {
+                    if (easy) pool = pool.concat(this.dicts.easy);
+                    if (normal) pool = pool.concat(this.dicts.normal);
+                    if (hard) pool = pool.concat(this.dicts.hard);
+                } else if (mode === 'weak') {
+                    // TODO: Filter from history
+                    pool = this.dicts.normal;
+                }
+
+                if (mode !== 'familiarize') pool.sort(() => Math.random() - 0.5);
+
+                const count = parseInt(document.getElementById('settingWordCount').value);
+                if (count > 0 && mode !== 'familiarize') return pool.slice(0, count);
+                return pool;
+            },
+
+            updateLiveStats() {
+                const elapsed = (Date.now() - this.state.startTime) / 1000;
+                if (elapsed <= 0) return;
+
+                const kps = this.state.correctKeys / elapsed;
+
+                document.getElementById('liveSushiKPS').textContent = kps.toFixed(2);
+
+                // Pure KPS approx
+                let pureTotalTime = this.state.pureTimes.reduce((a, b) => a + b.time, 0);
+                // add current word time if active
+                if (this.state.isActive && !this.state.isWaitingForWord && this.currentWordStarted) {
+                    pureTotalTime += (Date.now() - this.wordPureStartTime);
+                }
+                // Pure keys?
+                const pureKPS = pureTotalTime > 0 ? (this.state.totalKeys / (pureTotalTime / 1000)) : 0;
+                document.getElementById('livePureKPS').textContent = pureKPS.toFixed(2);
+
+                const accuracy = this.state.totalKeys > 0 ? (this.state.correctKeys / this.state.totalKeys * 100) : 100;
+                document.getElementById('liveAccuracy').textContent = Math.round(accuracy) + "%";
+
+                if (this.state.latencies.length > 0) {
+                    const avg = this.state.latencies.reduce((a, b) => a + b, 0) / this.state.latencies.length;
+                    document.getElementById('liveLatency').textContent = Math.round(avg) + "ms";
+                }
+            },
+
+            endGame(completed = false) {
+                this.state.isActive = false;
+                this.showScreen('resultScreen'); // Fixed ID
+
+                const elapsed = (Date.now() - this.state.startTime) / 1000;
+                const kps = elapsed > 0 ? (this.state.correctKeys / elapsed) : 0;
+                const kpm = kps * 60;
+
+                document.getElementById('resSushiKPS').textContent = kps.toFixed(2);
+                document.getElementById('resSushiKPM').textContent = Math.round(kpm);
+
+                // Pure stats
+                let pureTime = this.state.pureTimes.reduce((a, b) => a + b.time, 0);
+                const pureKPS = pureTime > 0 ? (this.state.correctKeys / (pureTime / 1000)) : 0;
+                document.getElementById('resPureKPS').textContent = pureKPS.toFixed(2);
+                document.getElementById('resPureKPM').textContent = Math.round(pureKPS * 60);
+
+                // Latency
+                const avgLat = this.state.latencies.length > 0 ? (this.state.latencies.reduce((a, b) => a + b, 0) / this.state.latencies.length) : 0;
+                document.getElementById('resLatency').textContent = Math.round(avgLat);
+
+                // Accuracy
+                const acc = this.state.totalKeys > 0 ? (this.state.correctKeys / this.state.totalKeys * 100) : 100;
+                document.getElementById('resAccuracy').textContent = Math.round(acc);
+
+                // Save
+                historyApp.save({
+                    timestamp: Date.now(),
+                    kpm: Math.round(kpm),
+                    pureKpm: Math.round(pureKPS * 60),
+                    kps: kps,
+                    latency: avgLat,
+                    accuracy: acc,
+                    mode: this.mode
+                });
+            },
+
+            retry() {
+                this.startGame(this.mode);
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+
+</html>

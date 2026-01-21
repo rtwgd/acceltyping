@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sushida Practice</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="data.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #1a1a1a;
+            --surface-color: #2d2d2d;
+            --primary-color: #e2b714;
+            --text-color: #e0e0e0;
+            --font-main: "Noto Sans JP", sans-serif;
+            --font-code: "Consolas", monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        header {
+            background-color: var(--surface-color);
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .settings-panel {
+            background-color: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 10px;
+            display: grid;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .setting-group h3 {
+            color: var(--primary-color);
+            border-bottom: 1px solid #444;
+            padding-bottom: 0.3rem;
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        button {
+            padding: 0.8rem 1.2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #444;
+            color: var(--text-color);
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+            color: #1a1a1a;
+        }
+
+        button.primary:hover {
+            background-color: #f4c430;
+        }
+
+        input[type="number"] {
+            background: #333;
+            color: #fff;
+            padding: 6px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            width: 70px;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .word-box-container {
+            background-color: var(--surface-color);
+            width: 100%;
+            max-width: 800px;
+            height: 200px;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #startOverlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            z-index: 10;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .display-element {
+            position: absolute;
+            white-space: nowrap;
+            color: #fff;
+            text-align: center;
+        }
+
+        .display-element.editing {
+            outline: 2px dashed var(--primary-color);
+            cursor: move;
+        }
+
+        #kanjiDisplay {
+            font-size: 3rem;
+            font-weight: bold;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #kanaDisplay {
+            font-size: 1.5rem;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #romajiDisplay {
+            font-size: 2.5rem;
+            font-family: var(--font-code);
+            top: 75%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .romaji-char {
+            color: #fff;
+        }
+
+        .romaji-char.typed {
+            color: #666;
+        }
+
+        .live-stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .edit-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        #editModeBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            z-index: 5;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            margin: 1rem 0;
+        }
+
+        .result-item {
+            text-align: center;
+            padding: 0.8rem;
+            border: 1px solid #444;
+            border-radius: 6px;
+        }
+
+        .result-item h4 {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 0.3rem;
+        }
+
+        .result-item .value {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .chart-container {
+            background: var(--surface-color);
+            padding: 1rem;
+            border-radius: 10px;
+            height: 250px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .weak-word-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #222;
+            padding: 0.8rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Sushida Practice</h1>
+    </header>
+
+    <main>
+        <!-- MENU SCREEN -->
+        <div id="gameMenu" class="screen active">
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <h3>難易度</h3>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label"><input type="checkbox" name="difficulty" value="easy" checked>
+                            Easy</label>
+                        <label class="checkbox-label"><input type="checkbox" name="difficulty" value="normal" checked>
+                            Normal</label>
+                        <label class="checkbox-label"><input type="checkbox" name="difficulty" value="hard" checked>
+                            Hard</label>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <h3>設定</h3>
+                    <div style="display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
+                        <label>ワード数: <input type="number" id="settingWordCount" value="30" min="1" max="999"></label>
+                        <label>苦手閾値: <input type="number" id="settingWeakThreshold" value="20" min="1" max="100"
+                                style="width:50px;">%</label>
+                    </div>
+                </div>
+
+                <div class="mode-buttons">
+                    <button class="primary" onclick="app.startGame('normal')">スタート</button>
+                    <button onclick="app.startGame('familiarize')">🔄 ワード慣れ</button>
+                    <button onclick="app.toggleWeakMenu()">苦手特訓</button>
+                    <button onclick="app.showScreen('history')">履歴</button>
+                </div>
+
+                <div id="weakMenu" style="display:none; border-top:1px solid #444; padding-top:1rem;">
+                    <h3 style="font-size:0.9rem; margin-bottom:0.5rem;">苦手ワード特訓</h3>
+                    <div style="display:flex; gap:8px; margin-bottom:0.5rem;">
+                        <button onclick="app.showWeakWords('easy')"
+                            style="padding:5px 10px; font-size:0.8rem;">Easy</button>
+                        <button onclick="app.showWeakWords('normal')"
+                            style="padding:5px 10px; font-size:0.8rem;">Normal</button>
+                        <button onclick="app.showWeakWords('hard')"
+                            style="padding:5px 10px; font-size:0.8rem;">Hard</button>
+                    </div>
+                    <div id="weakPreview" style="display:none;">
+                        <p style="font-size:0.85rem; margin-bottom:0.3rem;"><span id="weakCount">0</span>語</p>
+                        <div id="weakWordListPreview" class="weak-word-list"></div>
+                        <button class="primary" onclick="app.startWeakGame()" style="margin-top:0.5rem;">特訓開始</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="gameScreen" class="screen">
+            <div class="game-header">
+                <span id="gameModeDisplay">Mode: Normal</span>
+                <span style="color: #666;">Escで中断</span>
+                <span id="gameProgressDisplay">0 / 30</span>
+            </div>
+
+            <div class="word-box-container" id="wordBox">
+                <div id="startOverlay">スペースキーで開始</div>
+                <button id="editModeBtn" onclick="app.toggleEditMode()">配置編集</button>
+
+                <div id="kanaDisplay" class="display-element"></div>
+                <div id="kanjiDisplay" class="display-element"></div>
+                <div id="romajiDisplay" class="display-element"></div>
+
+                <div class="edit-hint" id="editHint" style="display:none;">ドラッグで移動 / ホイールでサイズ変更</div>
+            </div>
+
+            <div class="live-stats">
+                <div class="stat-box">
+                    <div class="stat-label">Sushi KPS</div>
+                    <div id="liveSushiKPS" class="stat-value">0.0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Pure KPS</div>
+                    <div id="livePureKPS" class="stat-value">0.0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Latency</div>
+                    <div id="liveLatency" class="stat-value">-</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Accuracy</div>
+                    <div id="liveAccuracy" class="stat-value">100%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="resultScreen" class="screen">
+            <h2 style="margin-bottom:1rem;">結果</h2>
+            <div class="result-grid">
+                <div class="result-item">
+                    <h4>Sushi KPM</h4>
+                    <div class="value"><span id="resSushiKPM">0</span></div>
+                </div>
+                <div class="result-item">
+                    <h4>Pure KPM</h4>
+                    <div class="value"><span id="resPureKPM">0</span></div>
+                </div>
+                <div class="result-item">
+                    <h4>Accuracy</h4>
+                    <div class="value"><span id="resAccuracy">100</span>%</div>
+                </div>
+                <div class="result-item">
+                    <h4>Latency</h4>
+                    <div class="value"><span id="resLatency">0</span>ms</div>
+                </div>
+            </div>
+            <div class="mode-buttons">
+                <button class="primary" onclick="app.retry()">もう一度</button>
+                <button onclick="app.showScreen('menu')">メニュー</button>
+            </div>
+        </div>
+
+        <!-- HISTORY SCREEN -->
+        <div id="historyScreen" class="screen">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; width:100%; max-width:600px;">
+                <h2>履歴</h2>
+                <button onclick="app.showScreen('menu')">閉じる</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="historyChart"></canvas>
+            </div>
+            <button onclick="historyApp.clearData()"
+                style="margin-top:1rem; color:#ff5252; border:1px solid #ff5252; background:transparent;">履歴削除</button>
+        </div>
+    </main>
+
+    <script>
+        const kanaToRomaji = {
+            'あ': ['a', 'u', 'ua'], 'い': ['i', 'ui'], 'う': ['u', 'wu', 'whu'], 'え': ['e', 'ei'], 'お': ['o', 'ou'],
+            'か': ['ka', 'ca'], 'き': ['ki'], 'く': ['ku', 'cu', 'qu'], 'け': ['ke'], 'こ': ['ko', 'co'],
+            'さ': ['sa'], 'し': ['si', 'shi', 'ci'], 'す': ['su'], 'せ': ['se', 'ce'], 'そ': ['so'],
+            'た': ['ta'], 'ち': ['ti', 'chi'], 'つ': ['tu', 'tsu'], 'て': ['te'], 'と': ['to'],
+            'な': ['na'], 'に': ['ni'], 'ぬ': ['nu'], 'ね': ['ne'], 'の': ['no'],
+            'は': ['ha'], 'ひ': ['hi'], 'ふ': ['fu', 'hu'], 'へ': ['he'], 'ほ': ['ho'],
+            'ま': ['ma'], 'み': ['mi'], 'む': ['mu'], 'め': ['me'], 'も': ['mo'],
+            'や': ['ya'], 'ゆ': ['yu'], 'よ': ['yo'],
+            'ら': ['ra'], 'り': ['ri'], 'る': ['ru'], 'れ': ['re'], 'ろ': ['ro'],
+            'わ': ['wa'], 'を': ['wo'], 'ん': ['nn', 'xn', 'n'],
+            'が': ['ga'], 'ぎ': ['gi'], 'ぐ': ['gu'], 'げ': ['ge'], 'ご': ['go'],
+            'ざ': ['za'], 'じ': ['zi', 'ji'], 'ず': ['zu'], 'ぜ': ['ze'], 'ぞ': ['zo'],
+            'だ': ['da'], 'ぢ': ['di'], 'づ': ['du'], 'で': ['de'], 'ど': ['do'],
+            'ば': ['ba'], 'び': ['bi'], 'ぶ': ['bu'], 'べ': ['be'], 'ぼ': ['bo'],
+            'ぱ': ['pa'], 'ぴ': ['pi'], 'ぷ': ['pu'], 'ぺ': ['pe'], 'ぽ': ['po'],
+            'ぁ': ['la', 'xa'], 'ぃ': ['li', 'xi'], 'ぅ': ['lu', 'xu'], 'ぇ': ['le', 'xe'], 'ぉ': ['lo', 'xo'],
+            'ゃ': ['lya', 'xya'], 'ゅ': ['lyu', 'xyu'], 'ょ': ['lyo', 'xyo'],
+            'っ': ['ltu', 'xtu', 'ltsu'], 'ゎ': ['lwa', 'xwa'],
+
+            // Combination Characters (Yoon) with split inputs supported
+            'きゃ': ['kya', 'kilya', 'kixya'], 'きゅ': ['kyu', 'kilyu', 'kixyu'], 'きょ': ['kyo', 'kilyo', 'kixyo'],
+            'しゃ': ['sya', 'sha', 'silya', 'sixya', 'shilya', 'shixya'], 'しゅ': ['syu', 'shu', 'silyu', 'sixyu', 'shilyu', 'shixyu'], 'しょ': ['syo', 'sho', 'silyo', 'sixyo', 'shilyo', 'shixyo'],
+            'ちゃ': ['tya', 'cha', 'tilya', 'tixya', 'chilya', 'chixya'], 'ちゅ': ['tyu', 'chu', 'tilyu', 'tixyu', 'chilyu', 'chixyu'], 'ちょ': ['tyo', 'cho', 'tilyo', 'tixyo', 'chilyo', 'chixyo'],
+            'にゃ': ['nya', 'nilya', 'nixya'], 'にゅ': ['nyu', 'nilyu', 'nixyu'], 'にょ': ['nyo', 'nilyo', 'nixyo'],
+            'ひゃ': ['hya', 'hilya', 'hixya'], 'ひゅ': ['hyu', 'hilyu', 'hixyu'], 'ひょ': ['hyo', 'hilyo', 'hixyo'],
+            'みゃ': ['mya', 'milya', 'mixya'], 'みゅ': ['myu', 'milyu', 'mixyu'], 'みょ': ['myo', 'milyo', 'mixyo'],
+            'りゃ': ['rya', 'rilya', 'rixya'], 'りゅ': ['ryu', 'rilyu', 'rixyu'], 'りょ': ['ryo', 'rilyo', 'rixyo'],
+            'ぎゃ': ['gya', 'gilya', 'gixya'], 'ぎゅ': ['gyu', 'gilyu', 'gixyu'], 'ぎょ': ['gyo', 'gilyo', 'gixyo'],
+            'じゃ': ['zya', 'ja', 'jya', 'zilya', 'zixya', 'jilya', 'jixya'], 'じゅ': ['zyu', 'ju', 'jyu', 'zilyu', 'zixyu', 'jilyu', 'jixyu'], 'じょ': ['zyo', 'jo', 'jyo', 'zilyo', 'zixyo', 'jilyo', 'jixyo'], 'じぇ': ['zye', 'je', 'jye', 'zilye', 'zixye', 'jilye', 'jixye'],
+            'びゃ': ['bya', 'bilya', 'bixya'], 'びゅ': ['byu', 'bilyu', 'bixyu'], 'びょ': ['byo', 'bilyo', 'bixyo'],
+            'ぴゃ': ['pya', 'pilya', 'pixya'], 'ぴゅ': ['pyu', 'pilyu', 'pixyu'], 'ぴょ': ['pyo', 'pilyo', 'pixyo'],
+            'てぃ': ['thi', 'txi', 'teli', 'texi'], 'でぃ': ['dhi', 'dxi', 'deli', 'dexi'],
+
+            // Extended Katakana / Foreign Sounds
+            'ふぁ': ['fa', 'fwa', 'fula', 'fuxa'], 'ふぃ': ['fi', 'fwi', 'fyi', 'fuli', 'fuhi'], 'ふぇ': ['fe', 'fwe', 'fye', 'fule', 'fuxe'], 'ふぉ': ['fo', 'fwo', 'fulo', 'fuxo'],
+            'うぁ': ['wha', 'ula', 'uxa'], 'うぃ': ['wi', 'whi', 'uli', 'uxi'], 'うぇ': ['we', 'whe', 'ule', 'uxe'], 'うぉ': ['who', 'ulo', 'uxo'],
+            'ヴぁ': ['va', 'vula', 'vuxa'], 'ヴぃ': ['vi', 'vuli', 'vuxi'], 'ヴ': ['vu'], 'ヴぇ': ['ve', 'vule', 'vuxe'], 'ヴぉ': ['vo', 'vulo', 'vuxo'],
+            'くぁ': ['qa', 'kwa', 'qwa', 'kula', 'kuxa'], 'くぃ': ['qi', 'qwi', 'qyi', 'kuli', 'kuxi'], 'くぇ': ['qe', 'qwe', 'qye', 'kule', 'kuxe'], 'くぉ': ['qo', 'qwo', 'kulo', 'kuxo'],
+            'ぐぁ': ['gwa', 'gula', 'guxa'], 'つぁ': ['tsa', 'tsula', 'tsuxa'], 'つぃ': ['tsi', 'tsuli', 'tsuxi'], 'つぇ': ['tse', 'tsule', 'tsuxe'], 'つぉ': ['tso', 'tsulo', 'tsuxo'],
+            'とぁ': ['twa', 'tola', 'toxa'], 'とぃ': ['twi', 'toli', 'toxi'], 'とぅ': ['twu', 'tolu', 'toxu'], 'とぇ': ['twe', 'tole', 'toxe'], 'とぉ': ['two', 'tolo', 'toxo'],
+            'どぁ': ['dwa', 'dola', 'doxa'], 'どぃ': ['dwi', 'doli', 'doxi'], 'どぅ': ['dwu', 'dolu', 'doxu'], 'どぇ': ['dwe', 'dole', 'doxe'], 'どぉ': ['dwo', 'dolo', 'doxo'],
+
+            // Symbols
+            'ー': ['-'], '、': [','], '。': ['.'],
+            '！': ['!'], '？': ['?'],
+            '!': ['!'], '?': ['?'], ',': [','], '.': ['.']
+        };
+
+        class TypingEngine {
+            constructor() { this.reset(); }
+            reset() {
+                this.kanaParts = [];
+                this.currentIndex = 0;
+                this.currentTyped = "";
+                this.completedString = "";
+                this.totalKeystrokes = 0;
+                this.correctKeystrokes = 0;
+            }
+            setWord(kanaList) {
+                this.reset();
+                const rawString = Array.isArray(kanaList) ? kanaList.join('') : kanaList;
+                let i = 0;
+                while (i < rawString.length) {
+                    if (i + 1 < rawString.length && kanaToRomaji[rawString.substring(i, i + 2)]) {
+                        this.kanaParts.push(rawString.substring(i, i + 2));
+                        i += 2;
+                    } else {
+                        this.kanaParts.push(rawString.substring(i, i + 1));
+                        i++;
+                    }
+                }
+            }
+            handleInput(key) {
+                this.totalKeystrokes++;
+                if (this.currentIndex >= this.kanaParts.length) return false;
+                const targetKana = this.kanaParts[this.currentIndex];
+                let patterns = kanaToRomaji[targetKana] || [targetKana];
+
+                if (targetKana === 'っ' && this.currentIndex + 1 < this.kanaParts.length) {
+                    const nextPatterns = kanaToRomaji[this.kanaParts[this.currentIndex + 1]];
+                    if (nextPatterns) patterns = [...patterns, ...new Set(nextPatterns.map(p => p[0]))];
+                }
+
+                let nextInput = this.currentTyped + key;
+
+                if (targetKana === 'ん' && this.currentTyped === 'n' && key !== 'n' && key !== "'") {
+                    if (!patterns.some(p => p.startsWith(nextInput))) {
+                        this.completedString += 'n';
+                        this.currentIndex++;
+                        this.currentTyped = "";
+                        this.correctKeystrokes++;
+                        if (this.currentIndex < this.kanaParts.length) return this.handleInput(key);
+                        return 'completed';
+                    }
+                }
+
+                const validPattern = patterns.find(p => p.startsWith(nextInput));
+                if (validPattern) {
+                    this.currentTyped = nextInput;
+                    this.correctKeystrokes++;
+                    if (validPattern === this.currentTyped) {
+                        this.completedString += this.currentTyped;
+                        this.currentTyped = "";
+                        this.currentIndex++;
+                    }
+                    if (this.currentIndex >= this.kanaParts.length) return 'completed';
+                    return 'valid';
+                }
+                return 'invalid';
+            }
+            getDisplayHtml() {
+                let html = `<span class="romaji-char typed">${this.completedString}</span>`;
+                if (this.currentIndex < this.kanaParts.length) {
+                    const target = this.kanaParts[this.currentIndex];
+                    let patterns = kanaToRomaji[target] || [target];
+
+                    // Look for pattern matching current input
+                    let pattern = patterns[0]; // Default
+                    if (this.currentTyped.length > 0) {
+                        const matching = patterns.find(p => p.startsWith(this.currentTyped));
+                        if (matching) pattern = matching;
+                    }
+
+                    if (target === 'っ' && this.currentTyped.length === 1 && !['l', 'x'].includes(this.currentTyped)) {
+                        const nextPart = this.kanaParts[this.currentIndex + 1];
+                        if (nextPart) {
+                            const nextPatterns = kanaToRomaji[nextPart] || [nextPart];
+                            const nextP = nextPatterns[0];
+                            // If currentTyped matches first char of next pattern
+                            if (nextP && nextP.startsWith(this.currentTyped)) {
+                                pattern = this.currentTyped + nextP.substring(0);
+                                // Actually for display purposes of just the sokuon, we essentially
+                                // want to show the sokuon char as the typed one.
+                                // But the logic below slices by currentTyped.length. 
+                                // So if we typed 't', pattern becomes 't...', displaying '...'
+                                // Wait, the standard pattern for 'っ' is usually 'ltu' or double char.
+                                // If using double char trick, correct pattern is just currentTyped?
+                                pattern = this.currentTyped + (nextPatterns[0].substring(0, 1) === this.currentTyped ? '' : '');
+                                // Simplified: if using sokuon double-consonant, the "pattern" for this chunk
+                                // is effectively just the doubled char (e.g. 'k'). 
+                                // logic: pattern.substring(currentTyped.length) -> "k".substring(1) -> ""
+                                pattern = this.currentTyped;
+                            }
+                        }
+                    }
+
+                    html += `<span class="romaji-char typed">${this.currentTyped}</span>`;
+                    html += `<span class="romaji-char">${pattern.substring(this.currentTyped.length)}</span>`;
+
+                    for (let i = this.currentIndex + 1; i < this.kanaParts.length; i++) {
+                        html += `<span class="romaji-char">${(kanaToRomaji[this.kanaParts[i]] || [this.kanaParts[i]])[0]}</span>`;
+                    }
+                }
+                return html;
+            }
+        }
+        const typer = new TypingEngine();
+
+        class HistoryManager {
+            constructor() {
+                this.storageKey = 'sushida_history_v3';
+                this.weakKey = 'sushida_weak_words';
+                this.layoutKey = 'sushida_layout';
+                this.maxKey = 'sushida_max_kps';
+                this.history = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+                this.maxPureKps = parseFloat(localStorage.getItem(this.maxKey) || '0');
+                this.chart = null;
+            }
+            save(rec) {
+                this.history.push(rec);
+                if (this.history.length > 50) this.history.shift();
+                if (rec.pureKps && rec.pureKps > this.maxPureKps) {
+                    this.maxPureKps = rec.pureKps;
+                    localStorage.setItem(this.maxKey, this.maxPureKps);
+                }
+                localStorage.setItem(this.storageKey, JSON.stringify(this.history));
+                this.updateChart();
+            }
+            clearData() {
+                if (confirm("履歴を削除しますか？")) {
+                    this.history = [];
+                    this.maxPureKps = 0;
+                    localStorage.removeItem(this.storageKey);
+                    localStorage.removeItem(this.weakKey);
+                    localStorage.removeItem(this.maxKey);
+                    this.updateChart();
+                }
+            }
+            saveWeakWords(words) {
+                let current = this.getWeakWords();
+                words.forEach(w => { if (!current.some(c => c.text === w.text)) current.push(w); });
+                localStorage.setItem(this.weakKey, JSON.stringify(current));
+            }
+            removeWeakWord(word) {
+                let current = this.getWeakWords();
+                current = current.filter(w => w.text !== word.text);
+                localStorage.setItem(this.weakKey, JSON.stringify(current));
+            }
+            getWeakWords() { return JSON.parse(localStorage.getItem(this.weakKey) || '[]'); }
+            saveLayout(layout) { localStorage.setItem(this.layoutKey, JSON.stringify(layout)); }
+            loadLayout() { return JSON.parse(localStorage.getItem(this.layoutKey) || 'null'); }
+            initChart() {
+                const ctx = document.getElementById('historyChart');
+                if (!ctx) return;
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: this.history.map((_, i) => i + 1), datasets: [{ label: 'KPM', data: this.history.map(r => r.kpm), borderColor: '#e2b714', tension: 0.1 }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                });
+            }
+            updateChart() {
+                if (!this.chart) { this.initChart(); return; }
+                this.chart.data.labels = this.history.map((_, i) => i + 1);
+                this.chart.data.datasets[0].data = this.history.map(r => r.kpm);
+                this.chart.update();
+            }
+        }
+        const historyApp = new HistoryManager();
+
+        const app = {
+            screen: 'menu',
+            mode: 'normal',
+            words: [],
+            currentWordIndex: 0,
+            editMode: false,
+            weakPracticeWords: [],
+            tempWeakDiff: '',
+            state: { startTime: 0, correctKeys: 0, totalKeys: 0, latencies: [], pureTimes: [], isActive: false },
+            dicts: { easy: [], normal: [], hard: [] },
+
+            init() {
+                try {
+                    if (typeof DATA_EASY !== 'undefined') this.dicts.easy = DATA_EASY.list;
+                    if (typeof DATA_NORMAL !== 'undefined') this.dicts.normal = DATA_NORMAL.list;
+                    if (typeof DATA_HARD !== 'undefined') this.dicts.hard = DATA_HARD.list;
+                } catch (e) { console.error(e); }
+                window.addEventListener('keydown', (e) => this.handleKey(e));
+                historyApp.initChart();
+                this.loadLayout();
+                this.setupDrag();
+            },
+
+            handleKey(e) {
+                if (e.key === 'Escape') { this.state.isActive = false; this.showScreen('menu'); return; }
+                if (!this.state.isActive) {
+                    if (this.screen === 'game' && e.code === 'Space') { e.preventDefault(); this.startFirstWord(); }
+                    return;
+                }
+                if (this.editMode) return;
+                if (e.key === ' ' || e.key.length === 1) e.preventDefault();
+                if (e.key.length !== 1) return;
+
+                if (!this.currentWordStarted) {
+                    this.state.latencies.push(Date.now() - this.wordDisplayTime);
+                    this.currentWordStarted = true;
+                    this.wordPureStartTime = Date.now();
+                }
+
+                const prevCorrect = typer.correctKeystrokes;
+                const res = typer.handleInput(e.key);
+                this.state.totalKeys++;
+                this.state.correctKeys += (typer.correctKeystrokes - prevCorrect);
+
+                this.updateDisplay();
+                if (res === 'completed') this.finishWord();
+                this.updateLiveStats();
+            },
+
+            showScreen(id) {
+                document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+                document.getElementById(id === 'menu' ? 'gameMenu' : (id === 'history' ? 'historyScreen' : (id === 'result' ? 'resultScreen' : 'gameScreen'))).classList.add('active');
+                this.screen = id;
+                if (id === 'history') historyApp.updateChart();
+            },
+
+            toggleWeakMenu() {
+                const menu = document.getElementById('weakMenu');
+                menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            },
+
+            showWeakWords(diff) {
+                let source = diff === 'easy' ? this.dicts.easy : (diff === 'normal' ? this.dicts.normal : this.dicts.hard);
+                const allWeak = historyApp.getWeakWords();
+                const weakInLevel = allWeak.filter(w => source.some(s => s.text === w.text));
+
+                if (weakInLevel.length > 0) {
+                    this.weakPracticeWords = weakInLevel;
+                } else {
+                    alert("この難易度の苦手ワードはありません。ランダムに選出します。");
+                    this.weakPracticeWords = source.sort(() => .5 - Math.random()).slice(0, 10);
+                }
+
+                const listEl = document.getElementById('weakWordListPreview');
+                listEl.innerHTML = this.weakPracticeWords.slice(0, 15).map(w => `<div style="padding:2px 0; border-bottom:1px solid #333;">${w.text}</div>`).join('');
+                if (this.weakPracticeWords.length > 15) listEl.innerHTML += `<div>...他${this.weakPracticeWords.length - 15}語</div>`;
+                document.getElementById('weakCount').textContent = this.weakPracticeWords.length;
+                document.getElementById('weakPreview').style.display = 'block';
+                this.tempWeakDiff = diff;
+            },
+
+            startWeakGame() { this.startGame('weak', this.weakPracticeWords); },
+
+            startGame(mode, customList = null) {
+                this.mode = mode;
+                if (mode === 'weak' && customList) {
+                    this.words = customList;
+                    this.targetCount = customList.length;
+                    document.getElementById('gameModeDisplay').textContent = "Mode: Weak (" + this.tempWeakDiff + ")";
+                } else {
+                    this.words = this.generateWordList(mode);
+                    const count = parseInt(document.getElementById('settingWordCount').value) || 30;
+
+                    if (mode === 'familiarize') {
+                        this.targetCount = this.words.length;
+                        document.getElementById('gameModeDisplay').textContent = "Mode: ワード慣れ (全" + this.targetCount + "語)";
+                    } else {
+                        this.targetCount = Math.min(count, this.words.length);
+                        this.words = this.words.slice(0, this.targetCount);
+                        document.getElementById('gameModeDisplay').textContent = "Mode: " + this.getActiveDiffs().join(' & ');
+                    }
+                }
+
+                if (this.words.length === 0) { alert("ワードがありません"); return; }
+
+                this.showScreen('game');
+                this.state = { startTime: 0, correctKeys: 0, totalKeys: 0, latencies: [], pureTimes: [], isActive: false };
+                document.getElementById('startOverlay').style.display = 'flex';
+                typer.reset();
+                document.getElementById('kanjiDisplay').textContent = "";
+                document.getElementById('kanaDisplay').textContent = "";
+                document.getElementById('romajiDisplay').innerHTML = "";
+                document.getElementById('gameProgressDisplay').textContent = "0 / " + this.targetCount;
+            },
+
+            getActiveDiffs() {
+                let diffs = [];
+                if (document.querySelector('input[value="easy"]').checked) diffs.push('Easy');
+                if (document.querySelector('input[value="normal"]').checked) diffs.push('Normal');
+                if (document.querySelector('input[value="hard"]').checked) diffs.push('Hard');
+                return diffs.length ? diffs : ['Easy'];
+            },
+
+            startFirstWord() {
+                document.getElementById('startOverlay').style.display = 'none';
+                this.state.isActive = true;
+                this.state.startTime = Date.now();
+                this.currentWordIndex = -1;
+                this.nextWord();
+            },
+
+            nextWord() {
+                this.currentWordIndex++;
+                if (this.currentWordIndex >= this.words.length) { this.endGame(); return; }
+                const wordObj = this.words[this.currentWordIndex];
+                this.currentWordObj = wordObj;
+                typer.setWord(Array.isArray(wordObj.kana) ? wordObj.kana.join('') : wordObj.kana);
+                this.currentWordStarted = false;
+                this.wordDisplayTime = Date.now();
+                this.updateDisplay();
+                document.getElementById('gameProgressDisplay').textContent = `${this.currentWordIndex + 1} / ${this.targetCount}`;
+            },
+
+            updateDisplay() {
+                document.getElementById('kanjiDisplay').textContent = this.currentWordObj.text;
+                document.getElementById('kanaDisplay').textContent = Array.isArray(this.currentWordObj.kana) ? this.currentWordObj.kana.join('') : this.currentWordObj.kana;
+                document.getElementById('romajiDisplay').innerHTML = typer.getDisplayHtml();
+            },
+
+            finishWord() {
+                const pureTime = Date.now() - this.wordPureStartTime;
+                this.state.pureTimes.push(pureTime);
+
+                const mistyped = typer.totalKeystrokes > typer.correctKeystrokes;
+                const wordKPS = pureTime > 0 ? (typer.correctKeystrokes / (pureTime / 1000)) : 0;
+                const threshold = parseInt(document.getElementById('settingWeakThreshold').value) || 20;
+                const speedLimit = historyApp.maxPureKps * (threshold / 100);
+
+                // Add to weak words if mistyped or too slow
+                if (mistyped || (historyApp.maxPureKps > 0 && wordKPS < speedLimit)) {
+                    historyApp.saveWeakWords([this.currentWordObj]);
+                }
+
+                // Remove from weak words if typed at 90%+ of max speed without mistakes
+                const passThreshold = historyApp.maxPureKps * 0.9;
+                if (!mistyped && historyApp.maxPureKps > 0 && wordKPS >= passThreshold) {
+                    historyApp.removeWeakWord(this.currentWordObj);
+                }
+
+                this.nextWord();
+            },
+
+            generateWordList(mode) {
+                let pool = [];
+                if (document.querySelector('input[value="easy"]').checked) pool = pool.concat(this.dicts.easy);
+                if (document.querySelector('input[value="normal"]').checked) pool = pool.concat(this.dicts.normal);
+                if (document.querySelector('input[value="hard"]').checked) pool = pool.concat(this.dicts.hard);
+
+                // Always shuffle
+                return pool.sort(() => Math.random() - 0.5);
+            },
+
+            updateLiveStats() {
+                if (!this.state.startTime) return;
+                const elapsed = (Date.now() - this.state.startTime) / 1000;
+                document.getElementById('liveSushiKPS').textContent = (this.state.correctKeys / (elapsed || 1)).toFixed(1);
+
+                let pureTime = this.state.pureTimes.reduce((a, b) => a + b, 0);
+                if (this.state.isActive && this.currentWordStarted) pureTime += (Date.now() - this.wordPureStartTime);
+                const pureKPS = pureTime > 0 ? (this.state.correctKeys / (pureTime / 1000)) : 0;
+                document.getElementById('livePureKPS').textContent = pureKPS.toFixed(1);
+
+                const acc = this.state.totalKeys > 0 ? (this.state.correctKeys / this.state.totalKeys * 100) : 100;
+                document.getElementById('liveAccuracy').textContent = Math.round(acc) + "%";
+
+                if (this.state.latencies.length > 0) {
+                    document.getElementById('liveLatency').textContent = Math.round(this.state.latencies.reduce((a, b) => a + b, 0) / this.state.latencies.length) + "ms";
+                }
+            },
+
+            endGame() {
+                this.state.isActive = false;
+                this.showScreen('result');
+                const elapsed = (Date.now() - this.state.startTime) / 1000;
+                const sushiKps = elapsed > 0 ? (this.state.correctKeys / elapsed) : 0;
+                const sushiKpm = sushiKps * 60;
+                const pureTime = this.state.pureTimes.reduce((a, b) => a + b, 0);
+                const pureKps = pureTime > 0 ? (this.state.correctKeys / (pureTime / 1000)) : 0;
+                const pureKpm = pureKps * 60;
+                const acc = this.state.totalKeys > 0 ? (this.state.correctKeys / this.state.totalKeys * 100) : 100;
+                const avgLat = this.state.latencies.length > 0 ? (this.state.latencies.reduce((a, b) => a + b, 0) / this.state.latencies.length) : 0;
+
+                document.getElementById('resSushiKPM').textContent = Math.round(sushiKpm);
+                document.getElementById('resPureKPM').textContent = Math.round(pureKpm);
+                document.getElementById('resAccuracy').textContent = Math.round(acc);
+                document.getElementById('resLatency').textContent = Math.round(avgLat);
+
+                if (this.mode !== 'weak') {
+                    historyApp.save({ date: new Date().toISOString(), kpm: Math.round(sushiKpm), pureKps: pureKps, accuracy: Math.round(acc) });
+                }
+            },
+
+            retry() { if (this.mode === 'weak') this.startWeakGame(); else this.startGame(this.mode); },
+
+            toggleEditMode() {
+                this.editMode = !this.editMode;
+                ['kanjiDisplay', 'kanaDisplay', 'romajiDisplay'].forEach(id => document.getElementById(id).classList.toggle('editing', this.editMode));
+                document.getElementById('editHint').style.display = this.editMode ? 'block' : 'none';
+                document.getElementById('editModeBtn').textContent = this.editMode ? '完了' : '配置編集';
+                if (!this.editMode) this.saveLayout();
+            },
+
+            setupDrag() {
+                const box = document.getElementById('wordBox');
+                const boxRect = () => box.getBoundingClientRect();
+                let dragging = null, startX, startY, elStartX, elStartY;
+
+                ['kanjiDisplay', 'kanaDisplay', 'romajiDisplay'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.addEventListener('mousedown', (e) => {
+                        if (!this.editMode) return;
+                        dragging = el;
+                        const rect = el.getBoundingClientRect();
+                        const bRect = boxRect();
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        elStartX = rect.left - bRect.left + rect.width / 2;
+                        elStartY = rect.top - bRect.top + rect.height / 2;
+                        e.preventDefault();
+                    });
+                    el.addEventListener('wheel', (e) => {
+                        if (!this.editMode) return;
+                        e.preventDefault();
+                        let size = parseFloat(getComputedStyle(el).fontSize);
+                        size += e.deltaY < 0 ? 2 : -2;
+                        el.style.fontSize = Math.max(10, Math.min(100, size)) + 'px';
+                    });
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!dragging) return;
+                    const bRect = boxRect();
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    const newX = elStartX + dx;
+                    const newY = elStartY + dy;
+                    let pctX = (newX / bRect.width * 100);
+                    const pctY = (newY / bRect.height * 100);
+
+                    // Snap to center (50%) if within 5% range
+                    if (Math.abs(pctX - 50) < 5) pctX = 50;
+
+                    dragging.style.left = pctX + '%';
+                    dragging.style.top = pctY + '%';
+                    dragging.style.transform = 'translate(-50%, -50%)';
+                });
+
+                window.addEventListener('mouseup', () => { dragging = null; });
+            },
+
+            saveLayout() {
+                const ids = ['kanjiDisplay', 'kanaDisplay', 'romajiDisplay'];
+                const layout = {};
+                ids.forEach(id => {
+                    const el = document.getElementById(id);
+                    layout[id] = { left: el.style.left, top: el.style.top, fontSize: el.style.fontSize, transform: el.style.transform };
+                });
+                historyApp.saveLayout(layout);
+            },
+
+            loadLayout() {
+                const layout = historyApp.loadLayout();
+                if (!layout) return;
+                Object.keys(layout).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && layout[id]) {
+                        if (layout[id].left) el.style.left = layout[id].left;
+                        if (layout[id].top) el.style.top = layout[id].top;
+                        if (layout[id].fontSize) el.style.fontSize = layout[id].fontSize;
+                        if (layout[id].transform) el.style.transform = layout[id].transform;
+                    }
+                });
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccelTyping | アクセルタイピング</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#e2b714">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <style>
+        :root {
+            --bg-color: #323437;
+            --main-color: #e2b714;
+            --text-color: #d1d0c5;
+            --sub-color: #646669;
+            --card-bg: rgba(44, 46, 49, 0.7);
+            --card-hover: rgba(50, 52, 55, 0.9);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background Gradients */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(226, 183, 20, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            animation: move 20s linear infinite;
+        }
+
+        @keyframes move {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+            z-index: 1;
+        }
+
+        header {
+            margin-bottom: 60px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            color: var(--main-color);
+            font-weight: 600;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--sub-color);
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 100%;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .portal-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: 0.5s;
+        }
+
+        .portal-card:hover::before {
+            left: 100%;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-10px);
+            background: var(--card-hover);
+            border-color: var(--main-color);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-color);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            color: var(--main-color);
+            border: 1px solid rgba(226, 183, 20, 0.3);
+            transition: var(--transition);
+        }
+
+        .portal-card:hover .card-icon {
+            background: var(--main-color);
+            color: var(--bg-color);
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--main-color);
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: var(--sub-color);
+            line-height: 1.6;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 80px;
+            color: var(--sub-color);
+            font-size: 0.85rem;
+            animation: fadeIn 1.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .portal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>ACCEL TYPING</h1>
+            <p>タイピングを加速させるポータルサイト</p>
+        </header>
+
+        <div class="portal-grid">
+            <!-- Choubun -->
+            <div onclick="location.href='./choubun/index.html'" class="portal-card">
+                <div class="card-icon">📄</div>
+                <div class="card-title">長文練習</div>
+                <div class="card-desc">ワープロ検定速度練習に対応した長文タイピング。詳細なミス判定機能付き。</div>
+            </div>
+
+            <!-- Sushi Practice -->
+            <div onclick="location.href='./sushi_practice/index.html'" class="portal-card">
+                <div class="card-icon">🍣</div>
+                <div class="card-title">寿司打練習</div>
+                <div class="card-desc">寿司打でハイスコアを取りたい人へ。</div>
+            </div>
+
+            <!-- Simple Typing -->
+            <div onclick="location.href='./simpletyping/index.html'" class="portal-card">
+                <div class="card-icon">⌨️</div>
+                <div class="card-title">シンプルタイピング</div>
+                <div class="card-desc">無駄を削ぎ落とした王道のタイピング。タイピングを速くしたいならこれ一択。</div>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 AccelTyping (アクセルタイピング). All rights reserved.
+        </footer>
+    </div>
+
+    <script>
+        // Force cross-origin links to open in the same window (PWA standalone window)
+        // by avoiding regular <a> tags and using JavaScript navigation.
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed', err));
+            });
+        }
+    </script>
+</body>
+
+</html>
