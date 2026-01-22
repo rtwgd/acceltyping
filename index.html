@@ -227,6 +227,15 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Disable animations when 'no-animation' class is present on body */
+        body.no-animation header,
+        body.no-animation .portal-grid,
+        body.no-animation footer {
+            animation: none !important;
+            opacity: 1 !important; /* Ensure elements are visible */
+            transform: none !important; /* Ensure elements are in final position */
+        }
     </style>
 </head>
 
@@ -276,6 +285,37 @@
                     .then(reg => console.log('Service Worker registered'))
                     .catch(err => console.log('Service Worker registration failed', err));
             });
+        }
+
+        // Secret code detection for dark portal
+        (function () {
+            const secretCode = ['d', 'a', 'r', 'k'];
+            let inputBuffer = [];
+
+            document.addEventListener('keydown', (e) => {
+                // Only check letter keys
+                if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
+                    inputBuffer.push(e.key.toLowerCase());
+
+                    // Keep only last N characters where N is the secret code length
+                    if (inputBuffer.length > secretCode.length) {
+                        inputBuffer.shift();
+                    }
+
+                    // Check if the buffer matches the secret code
+                    if (inputBuffer.length === secretCode.length &&
+                        inputBuffer.every((char, i) => char === secretCode[i])) {
+                        // Redirect to dark portal
+                        window.location.href = './dark_portal/index.html';
+                    }
+                }
+            });
+        })();
+
+        // Check for 'noAnimation' flag from sessionStorage
+        if (sessionStorage.getItem('noAnimation') === 'true') {
+            document.body.classList.add('no-animation');
+            sessionStorage.removeItem('noAnimation'); // Clear the flag
         }
     </script>
 </body>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHADOW TYPING | シャドウタイピング</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0d0f;
+            --main-color: #8b5cf6;
+            --accent-color: #a855f7;
+            --text-color: #e0e0e0;
+            --sub-color: #555;
+            --card-bg: rgba(20, 20, 25, 0.8);
+            --card-hover: rgba(30, 30, 40, 0.95);
+            --danger-color: #ef4444;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(239, 68, 68, 0.05) 0%, transparent 70%);
+            z-index: -1;
+            animation: pulse 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Glitch effect for title */
+        @keyframes glitch {
+            0% {
+                text-shadow: 2px 0 #ff0000, -2px 0 #00ffff;
+            }
+
+            25% {
+                text-shadow: -2px 0 #ff0000, 2px 0 #00ffff;
+            }
+
+            50% {
+                text-shadow: 2px 2px #ff0000, -2px -2px #00ffff;
+            }
+
+            75% {
+                text-shadow: -2px 2px #ff0000, 2px -2px #00ffff;
+            }
+
+            100% {
+                text-shadow: 2px 0 #ff0000, -2px 0 #00ffff;
+            }
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--main-color);
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: var(--main-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            background: var(--main-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        header {
+            margin-bottom: 60px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            color: var(--main-color);
+            font-weight: 600;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            animation: glitch 3s infinite;
+        }
+
+                        header p {
+                            color: var(--sub-color);
+                            font-size: 1rem;
+                            letter-spacing: 4px;
+                            text-transform: uppercase;
+                        }
+        
+                        .emergency-exit-info {
+                            color: var(--sub-color);
+                            font-size: 0.85rem;
+                            margin-top: 10px;
+                            margin-bottom: 10px;
+                            letter-spacing: 1px;
+                        }
+        .warning-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 15px;
+            letter-spacing: 2px;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            width: 100%;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .portal-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 35px 25px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .portal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+            transition: 0.5s;
+        }
+
+        .portal-card:hover::before {
+            left: 100%;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-8px);
+            background: var(--card-hover);
+            border-color: var(--main-color);
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.3);
+        }
+
+        .card-icon {
+            width: 55px;
+            height: 55px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            color: var(--main-color);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            transition: var(--transition);
+        }
+
+        .portal-card:hover .card-icon {
+            background: var(--main-color);
+            color: var(--bg-color);
+            transform: scale(1.1) rotate(-5deg);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent-color);
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--sub-color);
+            line-height: 1.5;
+        }
+
+        .card-number {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 24px;
+            height: 24px;
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: var(--main-color);
+            font-weight: 600;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        footer {
+            margin-top: 60px;
+            color: var(--sub-color);
+            font-size: 0.8rem;
+            animation: fadeIn 1.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .portal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="../index.html" class="back-button">
+        <span>←</span>
+        <span>EXIT</span>
+    </a>
+
+    <div class="container">
+        <header>
+            <h1>SHADOW TYPING</h1>
+            <p>Hidden Underground</p>
+            <div class="emergency-exit-info">Press 'Q' for Emergency Exit</div>
+            <div class="warning-badge">⚠ CLASSIFIED AREA</div>
+        </header>
+
+        <div class="portal-grid">
+            <!-- Site 1: iframe Display -->
+            <div onclick="location.href='./site1_iframe/index.html'" class="portal-card">
+                <span class="card-number">01</span>
+                <div class="card-icon">🌐</div>
+                <div class="card-title">ポータル</div>
+                <div class="card-desc">隠されたサイトへのアクセスポイント。about:blankでステルスモード。</div>
+            </div>
+
+            <!-- Site 2: Google Maps -->
+            <div onclick="location.href='./site2_maps/index.html'" class="portal-card">
+                <span class="card-number">02</span>
+                <div class="card-icon">🗺️</div>
+                <div class="card-title">ランダムマップ</div>
+                <div class="card-desc">地球上のランダムな場所を複数ポップアップで表示。</div>
+            </div>
+
+            <!-- Site 3: CPU Load -->
+            <div onclick="location.href='./site3_cpu/index.html'" class="portal-card">
+                <span class="card-number">03</span>
+                <div class="card-icon">🔥</div>
+                <div class="card-title">CPU負荷</div>
+                <div class="card-desc">指定した量だけCPUに負荷をかける。ストレステスト用。</div>
+            </div>
+
+            <!-- Site 4: Custom Link -->
+            <div onclick="location.href='./site4_custom/index.html'" class="portal-card">
+                <span class="card-number">04</span>
+                <div class="card-icon">🔗</div>
+                <div class="card-title">カスタムリンク</div>
+                <div class="card-desc">任意のURLをabout:blankで開く。フィルター回避用。</div>
+            </div>
+
+            <!-- Site 5: Hacker Simulator -->
+            <div onclick="location.href='./site5_hacker/index.html'" class="portal-card">
+                <span class="card-number">05</span>
+                <div class="card-icon">💻</div>
+                <div class="card-title">ハッカーシミュレーター</div>
+                <div class="card-desc">なんちゃってハッカー気分を味わえるコマンドライン。</div>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 Shadow Typing. You found the secret.
+        </footer>
+    </div>
+<script>
+    // --- Emergency Exit with 'Q' key ---
+    document.addEventListener('keydown', (event) => {
+        // Check if the pressed key is 'q' or 'Q'
+        // and ensure the user is not typing in an input field.
+        if (event.key.toLowerCase() === 'q') {
+            const targetTagName = event.target.tagName.toLowerCase();
+            if (targetTagName !== 'input' && targetTagName !== 'textarea') {
+                // Redirect to the home page.
+                sessionStorage.setItem('noAnimation', 'true'); // フラグを設定
+                window.location.href = '../index.html'; // dark_portal/index.html から見ると '../index.html' がルート
+            }
+        }
+    });
+    </script>
+</body>
+
+</html>

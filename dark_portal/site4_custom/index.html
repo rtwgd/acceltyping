@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カスタムリンク | Shadow Typing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0d0f;
+            --main-color: #8b5cf6;
+            --accent-color: #a855f7;
+            --text-color: #e0e0e0;
+            --sub-color: #555;
+            --card-bg: rgba(20, 20, 25, 0.8);
+            --success-color: #22c55e;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--main-color);
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: var(--main-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-button:hover {
+            background: var(--main-color);
+            color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--main-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--sub-color);
+            margin-bottom: 40px;
+            font-size: 0.9rem;
+        }
+
+        .info-box {
+            background: var(--card-bg);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .info-box p {
+            color: var(--sub-color);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            border-color: var(--main-color);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .input-group input::placeholder {
+            color: var(--sub-color);
+        }
+
+        .launch-btn {
+            background: linear-gradient(135deg, var(--main-color), var(--accent-color));
+            border: none;
+            border-radius: 12px;
+            padding: 18px 40px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .launch-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .launch-btn:active {
+            transform: translateY(0);
+        }
+
+        .launch-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .status.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .history {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .history h4 {
+            color: var(--sub-color);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .history-item:hover {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .history-item span {
+            flex: 1;
+            font-size: 0.8rem;
+            color: var(--sub-color);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-item .reopen {
+            color: var(--main-color);
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="../index.html" class="back-button">
+        <span>←</span>
+        <span>戻る</span>
+    </a>
+
+    <div class="container">
+        <h1>🔗 カスタムリンク</h1>
+        <p class="subtitle">任意のURLをステルスモードで開く</p>
+
+        <div class="info-box">
+            <h3>📋 説明</h3>
+            <p>入力したURLをabout:blankページ内のiframeで開きます。タブには「about:blank」と表示されるため、閲覧しているサイトがタブバーに表示されません。</p>
+        </div>
+
+        <div class="input-group">
+            <label for="url">URL を入力</label>
+            <input type="url" id="url" placeholder="https://example.com" oninput="validateUrl()">
+        </div>
+
+        <button class="launch-btn" id="launch-btn" onclick="launchUrl()" disabled>
+            🚀 開く
+        </button>
+
+        <div id="status" class="status"></div>
+
+        <div class="history" id="history-section" style="display: none;">
+            <h4>📜 履歴</h4>
+            <div class="history-list" id="history-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let history = JSON.parse(localStorage.getItem('customLinkHistory') || '[]');
+
+        function validateUrl() {
+            const url = document.getElementById('url').value;
+            const btn = document.getElementById('launch-btn');
+
+            try {
+                new URL(url);
+                btn.disabled = false;
+            } catch {
+                btn.disabled = true;
+            }
+        }
+
+        function launchUrl() {
+            const url = document.getElementById('url').value;
+
+            try {
+                new URL(url);
+            } catch {
+                showStatus('error', '有効なURLを入力してください');
+                return;
+            }
+
+            // Open about:blank window
+            const newWindow = window.open('about:blank', '_blank');
+
+            if (newWindow) {
+                // Write iframe to the blank page
+                newWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>about:blank</title>
+                        <style>
+                            * { margin: 0; padding: 0; }
+                            html, body { height: 100%; overflow: hidden; }
+                            iframe { width: 100%; height: 100%; border: none; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${url}" allowfullscreen></iframe>
+                    </body>
+                    </html>
+                `);
+                newWindow.document.close();
+
+                // Add to history
+                addToHistory(url);
+
+                showStatus('success', '✓ 新しいウィンドウで開きました');
+            } else {
+                showStatus('error', '✗ ポップアップがブロックされました');
+            }
+        }
+
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+
+        function addToHistory(url) {
+            // Remove if already exists
+            history = history.filter(h => h !== url);
+            // Add to beginning
+            history.unshift(url);
+            // Keep only last 10
+            history = history.slice(0, 10);
+            // Save
+            localStorage.setItem('customLinkHistory', JSON.stringify(history));
+            // Render
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const section = document.getElementById('history-section');
+            const list = document.getElementById('history-list');
+
+            if (history.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            list.innerHTML = '';
+
+            history.forEach(url => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.onclick = () => {
+                    document.getElementById('url').value = url;
+                    validateUrl();
+                };
+                item.innerHTML = `
+                    <span>${url}</span>
+                    <span class="reopen">再利用</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Initialize
+        renderHistory();
+    <script>
+// --- Emergency Exit with 'Q' key ---
+document.addEventListener('keydown', (event) => {
+    // Check if the pressed key is 'q' or 'Q'
+    // and ensure the user is not typing in an input field.
+    if (event.key.toLowerCase() === 'q') {
+        const targetTagName = event.target.tagName.toLowerCase();
+                    if (targetTagName !== 'input' && targetTagName !== 'textarea') {
+                        // Redirect to the home page.
+                        sessionStorage.setItem('noAnimation', 'true'); // フラグを設定
+                        window.location.href = '../../index.html';
+                    }    }
+});
+</script>
+</body>
+
+</html>

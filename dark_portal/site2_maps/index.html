@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ランダムマップ | Shadow Typing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0d0f;
+            --main-color: #8b5cf6;
+            --accent-color: #a855f7;
+            --text-color: #e0e0e0;
+            --sub-color: #555;
+            --card-bg: rgba(20, 20, 25, 0.8);
+            --success-color: #22c55e;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--main-color);
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: var(--main-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-button:hover {
+            background: var(--main-color);
+            color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--main-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--sub-color);
+            margin-bottom: 40px;
+            font-size: 0.9rem;
+        }
+
+        .info-box {
+            background: var(--card-bg);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .info-box p {
+            color: var(--sub-color);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-group label {
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+
+        .input-group input {
+            width: 80px;
+            padding: 12px 15px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-color);
+            font-size: 1.1rem;
+            text-align: center;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            border-color: var(--main-color);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+
+        .launch-btn {
+            background: linear-gradient(135deg, var(--main-color), var(--accent-color));
+            border: none;
+            border-radius: 12px;
+            padding: 18px 40px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .launch-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .launch-btn:active {
+            transform: translateY(0);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .coords-list {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .coords-list p {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--sub-color);
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <a href="../index.html" class="back-button">
+        <span>←</span>
+        <span>戻る</span>
+    </a>
+
+    <div class="container">
+        <h1>🗺️ ランダムマップ</h1>
+        <p class="subtitle">世界のランダムな場所をポップアップで表示</p>
+
+        <div class="info-box">
+            <h3>📋 説明</h3>
+            <p>指定した数だけランダムな位置のGoogle Mapsを小さなポップアップウィンドウで開きます。世界中のどこかに飛ばされる感覚を味わえます。</p>
+        </div>
+
+        <div class="input-group">
+            <label for="count">表示数:</label>
+            <input type="number" id="count" value="3" min="1" max="300">
+        </div>
+
+        <button class="launch-btn" onclick="launchMaps()">
+            🚀 マップを開く
+        </button>
+
+        <div id="status" class="status"></div>
+        <div id="coords-list" class="coords-list"></div>
+    </div>
+
+    <script>
+        function getRandomCoordinate() {
+            // Generate random latitude (-90 to 90) and longitude (-180 to 180)
+            const lat = (Math.random() * 180 - 90).toFixed(6);
+            const lng = (Math.random() * 360 - 180).toFixed(6);
+            return { lat, lng };
+        }
+
+        function launchMaps() {
+            const count = parseInt(document.getElementById('count').value);
+
+            if (count < 1 || count > 300) {
+                alert('表示数は1～300の範囲で指定してください。');
+                return;
+            }
+
+            const coordsList = document.getElementById('coords-list');
+            coordsList.innerHTML = '';
+
+            let openedCount = 0;
+            // Extremely small size, just enough to close
+            const popupWidth = 150;
+            const popupHeight = 100;
+
+            // Fixed position (top-left)
+            const left = 0;
+            const top = 0;
+
+            for (let i = 0; i < count; i++) {
+                const coord = getRandomCoordinate();
+
+                // Open Google Maps with the coordinates
+                const mapUrl = `https://www.google.com/maps?q=${coord.lat},${coord.lng}&z=10&output=embed`;
+
+                const popup = window.open(
+                    mapUrl,
+                    `map_${i}_${Date.now()}`,
+                    `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=no`
+                );
+
+                if (popup) {
+                    openedCount++;
+                    // Add coordinates to list
+                    const p = document.createElement('p');
+                    p.textContent = `#${i + 1}: (${coord.lat}, ${coord.lng})`;
+                    coordsList.appendChild(p);
+                }
+            }
+
+            const status = document.getElementById('status');
+            if (openedCount > 0) {
+                status.className = 'status success';
+                status.textContent = `✓ ${openedCount}個のマップポップアップを開きました`;
+            } else {
+                status.className = 'status';
+                status.style.display = 'block';
+                status.style.background = 'rgba(239, 68, 68, 0.1)';
+                status.style.border = '1px solid #ef4444';
+                status.style.color = '#ef4444';
+                status.textContent = '✗ ポップアップがブロックされました。ポップアップを許可してください。';
+            }
+        }
+    </script>
+<script>
+// --- Emergency Exit with 'Q' key ---
+document.addEventListener('keydown', (event) => {
+    // Check if the pressed key is 'q' or 'Q'
+    // and ensure the user is not typing in an input field.
+    if (event.key.toLowerCase() === 'q') {
+        const targetTagName = event.target.tagName.toLowerCase();
+                    if (targetTagName !== 'input' && targetTagName !== 'textarea') {
+                        // Redirect to the home page.
+                        sessionStorage.setItem('noAnimation', 'true'); // フラグを設定
+                        window.location.href = '../../index.html';
+                    }    }
+});
+</script>
+</body>
+
+</html>

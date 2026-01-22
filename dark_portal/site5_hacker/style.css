@@ -1,0 +1,32 @@
+body {
+    background-color: #000;
+    color: #0F0;
+    font-family: 'monospace', 'Consolas', 'Menlo', 'Courier New';
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+#terminal {
+    padding: 10px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.input-line {
+    display: flex;
+    padding: 0 10px;
+}
+
+.prompt {
+    margin-right: 8px;
+}
+
+.command-input {
+    background-color: transparent;
+    border: none;
+    color: #0F0;
+    font-family: inherit;
+    font-size: inherit;
+    width: 100%;
+    outline: none;
+}
