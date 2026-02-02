@@ -1,202 +1,131 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const problemTextDisplay = document.getElementById('problem-text');
-    const inputArea = document.getElementById('input-area');
-    const timerDisplay = document.getElementById('timer');
-    const startButton = document.getElementById('start-btn');
-    const finishButton = document.getElementById('finish-btn');
-    const resetButton = document.getElementById('reset-btn');
-    const charCountDisplay = document.getElementById('char-count');
-    const resultModal = document.getElementById('result-modal');
-    const resultDetails = document.getElementById('result-details');
-    const closeModalBtn = document.getElementById('close-modal');
-    const problemDropdown = document.getElementById('problem-dropdown');
-    const modeRandomBtn = document.getElementById('mode-random');
-    const modeSelectBtn = document.getElementById('mode-select');
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACCELTYPING 長文練習</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Roboto+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ホームボタン -->
+    <a href="../index.html" class="home-button">
+        <span class="home-icon">🏠</span>
+        <span class="home-text">HOME</span>
+    </a>
 
-    let currentProblem = null;
-    let timerInterval = null;
-    let timeLeft = 600;
-    let isRunning = false;
-    let selectedMode = 'random';
+    <div class="container">
+        <header>
+            <h1>長文練習</h1>
+            <p>acceltyping</p>
+        </header>
 
-    // --- ドロップダウン初期化 ---
-    problems.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.title;
-        problemDropdown.appendChild(opt);
-    });
+        <section class="controls">
+            <div class="control-group">
+                <div class="mode-selector">
+                    <button id="mode-random" class="btn-mode active">ランダム</button>
+                    <button id="mode-select" class="btn-mode">課題選択</button>
+                </div>
+                
+                <select id="problem-dropdown" class="problem-dropdown" style="display: none;">
+                    <!-- JSで生成 -->
+                </select>
 
-    // --- モード切替 ---
-    function updateModeUI() {
-        if (selectedMode === 'random') {
-            modeRandomBtn.classList.add('active');
-            modeSelectBtn.classList.remove('active');
-            problemDropdown.style.display = 'none';
-            problemTextDisplay.textContent = "スタートボタンを押すとランダムに問題が出題されます。";
-        } else {
-            modeSelectBtn.classList.add('active');
-            modeRandomBtn.classList.remove('active');
-            problemDropdown.style.display = 'inline-block';
-            const prob = problems.find(p => p.id == problemDropdown.value);
-            problemTextDisplay.textContent = prob ? prob.text : "";
-        }
-    }
-
-    modeRandomBtn.addEventListener('click', () => { if(!isRunning) { selectedMode = 'random'; updateModeUI(); } });
-    modeSelectBtn.addEventListener('click', () => { if(!isRunning) { selectedMode = 'select'; updateModeUI(); } });
-    problemDropdown.addEventListener('change', () => { if (selectedMode === 'select') { const prob = problems.find(p => p.id == problemDropdown.value); problemTextDisplay.textContent = prob ? prob.text : ""; } });
-
-    // --- コピー禁止 ---
-    const preventActions = (e) => { e.preventDefault(); return false; };
-    problemTextDisplay.addEventListener('contextmenu', preventActions);
-    problemTextDisplay.addEventListener('copy', preventActions);
-    problemTextDisplay.addEventListener('dragstart', preventActions);
-    inputArea.addEventListener('paste', (e) => { e.preventDefault(); alert("貼り付けは禁止されています。"); });
-
-    function formatTime(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    }
-
-    function startTimer() {
-        if (isRunning) return;
-        if (selectedMode === 'random') {
-            currentProblem = problems[Math.floor(Math.random() * problems.length)];
-        } else {
-            currentProblem = problems.find(p => p.id == problemDropdown.value);
-        }
-        problemTextDisplay.textContent = currentProblem.text;
-        inputArea.value = "";
-        inputArea.disabled = false;
-        inputArea.focus();
-        startButton.disabled = true;
-        finishButton.disabled = false;
-        problemDropdown.disabled = true;
-        modeRandomBtn.style.opacity = 0.5;
-        modeSelectBtn.style.opacity = 0.5;
-        timeLeft = 600;
-        timerDisplay.textContent = formatTime(timeLeft);
-        isRunning = true;
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            timerDisplay.textContent = formatTime(timeLeft);
-            if (timeLeft <= 0) finishExam();
-        }, 1000);
-    }
-
-    function finishExam() {
-        clearInterval(timerInterval);
-        isRunning = false;
-        inputArea.disabled = true;
-        finishButton.disabled = true;
-        startButton.disabled = false;
-        problemDropdown.disabled = false;
-        modeRandomBtn.style.opacity = 1;
-        modeSelectBtn.style.opacity = 1;
-        const inputText = inputArea.value;
-        const targetText = currentProblem.text;
-        const timeSpent = 600 - timeLeft;
-        const result = calculateErrors(inputText, targetText);
-        
-        const multiplier = timeSpent > 0 ? (600 / timeSpent) : 0;
-        const estChars = Math.round(inputText.length * multiplier);
-        const estErrors = Math.round(result.distance * multiplier);
-
-        // ミス減点ロジック (最初のコードの基準)
-        let penalty = estChars >= 600 ? 5 : (estChars >= 400 ? 3 : 1);
-        let netScore = estChars - (estErrors * penalty);
-        let grade = getGrade(netScore);
-
-        resultDetails.innerHTML = `
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px; background:var(--bg-color); padding:15px; border-radius:4px;">
-                <span>実入力: ${inputText.length}字</span>
-                <span>ミス: ${result.distance}箇所</span>
+                <button id="start-btn" class="btn-primary">スタート</button>
+                <button id="finish-btn" class="btn-danger" disabled>終了</button>
             </div>
-            <div style="text-align:center; margin-bottom:20px;">
-                <div style="font-size:0.9rem; color:var(--sub-color);">判定ランク</div>
-                <div style="font-size:2.5rem; color:var(--main-color); font-weight:bold;">${grade}</div>
-                <div style="color:var(--sub-color);">(10分換算正味得点: ${netScore}点)</div>
+            <div class="control-group">
+                <div id="timer" class="timer">10:00</div>
+                <button id="reset-btn" class="btn-secondary">リセット</button>
+                <button id="show-grades-btn" class="btn-info">判定基準一覧</button>
             </div>
-            <div class="error-report">${result.html}</div>
-        `;
-        resultModal.style.display = 'flex';
-    }
+        </section>
 
-    function resetAll() {
-        clearInterval(timerInterval);
-        isRunning = false;
-        timeLeft = 600;
-        timerDisplay.textContent = "10:00";
-        inputArea.value = "";
-        inputArea.disabled = true;
-        charCountDisplay.textContent = "文字数: 0";
-        startButton.disabled = false;
-        finishButton.disabled = true;
-        problemDropdown.disabled = false;
-        modeRandomBtn.style.opacity = 1;
-        modeSelectBtn.style.opacity = 1;
-        resultModal.style.display = 'none';
-        updateModeUI();
-    }
+        <main class="main-content">
+            <div class="problem-box">
+                <div class="problem-header">課題文</div>
+                <div id="problem-text">スタートボタンを押すとランダムに問題が出題されます。</div>
+            </div>
+            <div class="input-box">
+                <div class="input-header">
+                    <span>入力エリア</span>
+                    <span id="char-count">文字数: 0</span>
+                </div>
+                <textarea id="input-area" placeholder="ここに課題文をタイピングしてください..." disabled></textarea>
+            </div>
+        </main>
+    </div>
 
-    function calculateErrors(s1, s2) {
-        const m = s1.length, n = Math.min(s2.length, s1.length + 50);
-        const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-        for (let i = 0; i <= m; i++) dp[i][0] = i;
-        for (let j = 0; j <= n; j++) dp[0][j] = j;
-        for (let i = 1; i <= m; i++) {
-            for (let j = 1; j <= n; j++) {
-                if (s1[i-1] === s2[j-1]) dp[i][j] = dp[i-1][j-1];
-                else dp[i][j] = 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
-            }
-        }
-        let minDist = dp[m][0], bestJ = 0;
-        for (let j = 1; j <= n; j++) { if (dp[m][j] < minDist) { minDist = dp[m][j]; bestJ = j; } }
-        let i = m, j = bestJ, res = [];
-        while (i > 0 || j > 0) {
-            if (i > 0 && j > 0 && s1[i-1] === s2[j-1] && dp[i][j] === dp[i-1][j-1]) { res.unshift(s1[i-1]); i--; j--; }
-            else if (i > 0 && j > 0 && dp[i][j] === dp[i-1][j-1] + 1) { res.unshift(`<span class="error-char">${s1[i-1]}</span>`); i--; j--; }
-            else if (i > 0 && dp[i][j] === dp[i-1][j] + 1) { res.unshift(`<span class="error-char">${s1[i-1]}</span>`); i--; }
-            else if (j > 0 && dp[i][j] === dp[i][j-1] + 1) { res.unshift(`<span class="error-char">[抜]</span>`); j--; }
-            else { if (i > 0) { res.unshift(`<span class="error-char">${s1[i-1]}</span>`); i--; } else if (j > 0) { res.unshift(`<span class="error-char">[抜]</span>`); j--; } }
-        }
-        return { distance: minDist, html: res.join('').replace(/\n/g, '<br>') };
-    }
+    <!-- 結果モーダル -->
+    <div id="result-modal" class="modal">
+        <div class="modal-content">
+            <h2>結果発表</h2>
+            <div id="result-details"></div>
+            <button id="close-modal" class="btn-primary">閉じる</button>
+        </div>
+    </div>
 
-    // --- 判定ロジック (最初のコードの基準を反映) ---
-    function getGrade(score) {
-        if (score >= 3000) return "十段";
-        if (score >= 2750) return "九段";
-        if (score >= 2500) return "八段";
-        if (score >= 2250) return "七段";
-        if (score >= 2000) return "六段";
-        if (score >= 1750) return "五段";
-        if (score >= 1500) return "四段";
-        if (score >= 1250) return "三段";
-        if (score >= 1000) return "二段";
-        if (score >= 800) return "初段";
-        if (score >= 700) return "1級";
-        if (score >= 600) return "準1級";
-        if (score >= 500) return "2級";
-        if (score >= 400) return "準2級";
-        if (score >= 300) return "3級";
-        if (score >= 200) return "4級";
-        return "不合格";
-    }
+    <!-- 判定基準モーダル (最初のコードと同一) -->
+    <div id="grading-modal" class="modal">
+        <div class="modal-content grading-table-container">
+            <h2>判定基準一覧</h2>
+            <div class="grading-tables">
+                <div class="grading-section">
+                    <h3>🏆 公式級 (日本語ワープロ検定)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>級</th>
+                                <th>基準文字数</th>
+                                <th>ミス減点</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>初段</td><td>800~</td><td>-5</td></tr>
+                            <tr><td>1級</td><td>700~799</td><td>-5</td></tr>
+                            <tr><td>準1級</td><td>600~699</td><td>-5</td></tr>
+                            <tr><td>2級</td><td>500~599</td><td>-3</td></tr>
+                            <tr><td>準2級</td><td>400~499</td><td>-3</td></tr>
+                            <tr><td>3級</td><td>300~399</td><td>-1</td></tr>
+                            <tr><td>4級</td><td>200~299</td><td>-1</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="grading-section custom-ranks">
+                    <h3>⭐ 段位</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>段位</th>
+                                <th>基準文字数</th>
+                                <th>ミス減点</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="high-rank"><td>十段</td><td>3000~</td><td>-5</td></tr>
+                            <tr class="high-rank"><td>九段</td><td>2750~2999</td><td>-5</td></tr>
+                            <tr><td>八段</td><td>2500~2749</td><td>-5</td></tr>
+                            <tr><td>七段</td><td>2250~2499</td><td>-5</td></tr>
+                            <tr><td>六段</td><td>2000~2249</td><td>-5</td></tr>
+                            <tr><td>五段</td><td>1750~1999</td><td>-5</td></tr>
+                            <tr><td>四段</td><td>1500~1749</td><td>-5</td></tr>
+                            <tr><td>三段</td><td>1250~1499</td><td>-5</td></tr>
+                            <tr><td>二段</td><td>1000~1249</td><td>-5</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <button id="close-grading-modal" class="btn-primary" style="margin-top:20px;">閉じる</button>
+        </div>
+    </div>
 
-    inputArea.addEventListener('input', () => { charCountDisplay.textContent = `文字数: ${inputArea.value.length}`; });
-    startButton.addEventListener('click', startTimer);
-    finishButton.addEventListener('click', finishExam);
-    resetButton.addEventListener('click', resetAll);
-    closeModalBtn.addEventListener('click', () => { resultModal.style.display = 'none'; });
-    document.getElementById('show-grades-btn').addEventListener('click', () => { document.getElementById('grading-modal').style.display = 'flex'; });
-    document.getElementById('close-grading-modal').addEventListener('click', () => { document.getElementById('grading-modal').style.display = 'none'; });
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && !isRunning && document.activeElement !== inputArea) { e.preventDefault(); startButton.click(); }
-        if (e.code === 'Space' && e.shiftKey && isRunning) { e.preventDefault(); finishButton.click(); }
-        if (e.code === 'Escape') resetAll();
-    });
-    updateModeUI();
-});
+    <footer class="shortcuts-help">
+        <small>ショートカット: [Space] スタート / [Shift + Space] 終了 / [Esc] リセット</small>
+    </footer>
+
+    <script src="problems.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
